@@ -1,4 +1,4 @@
-package com.example.mockbit.Config;
+package com.example.mockbit.common.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 @Slf4j
 public class UpbitWebSocketConfig {
+
     private static final String UPBIT_WS_URL = "wss://api.upbit.com/websocket/v1";
 
     @PostConstruct
@@ -63,7 +64,13 @@ public class UpbitWebSocketConfig {
 
         @Override
         public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-            log.error("WebSocket connection closed: " + status);
+            log.error("WebSocket connection closed: {}", status);
+            try {
+                Thread.sleep(5000);
+                new StandardWebSocketClient().doHandshake(this, UPBIT_WS_URL);
+            } catch (Exception e) {
+                log.error("Error reconnecting WebSocket: {}", e.getMessage());
+            }
         }
     }
 }
