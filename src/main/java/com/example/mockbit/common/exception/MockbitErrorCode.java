@@ -15,6 +15,9 @@ public enum MockbitErrorCode {
     USER_PASSWORD_FORMAT_INVALID("비밀번호는 적어도 하나의 문자, 숫자, 특수문자가 포함되어야 합니다."),
     USER_NICKNAME_LENGTH_INVALID("사용자 닉네임은 %d자 이상 %d자 이하만 가능합니다."),
     USER_NICKNAME_ALREADY_EXIST("이미 존재하는 닉네임입니다."),
+    USER_EMAIL_ADDRESS_FORMAT_INVALID("지원하지 않는 이메일 형식입니다."),
+    USER_EMAIL_ADDRESS_EMPTY("이메일을 입력해주세요."),
+    USER_EMAIL_CODE_NOT_EQUAL("인증 번호가 일치하지 않습니다."),
 
     /* Request Validation */
     REQUEST_LIMIT("주문은 5000원 이상부터 가능합니다."),
