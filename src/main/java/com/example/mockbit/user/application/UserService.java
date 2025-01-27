@@ -1,28 +1,86 @@
 package com.example.mockbit.user.application;
 
+import com.example.mockbit.common.exception.AuthenticationException;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
+import com.example.mockbit.event.application.response.UserAppResponse;
+import com.example.mockbit.user.application.request.UserJoinAppRequest;
+import com.example.mockbit.user.application.request.UserUpdateAppRequest;
 import com.example.mockbit.user.domain.User;
 import com.example.mockbit.user.domain.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    public User createUser(String userid, String password, String nickname) {
-        if (userRepository.findByUserid(userid).isPresent()) {
+    @Transactional
+    public Long join(UserJoinAppRequest request) {
+        if (userRepository.findByUserid(request.userid()).isPresent()) {
             throw new MockBitException(MockbitErrorCode.USER_ID_ALREADY_EXIST);
         }
-        if (userRepository.findByNickname(nickname).isPresent()) {
+
+        if (userRepository.findByNickname(request.nickname()).isPresent()) {
             throw new MockBitException(MockbitErrorCode.USER_NICKNAME_ALREADY_EXIST);
         }
 
-        return userRepository.save(new User(userid, password, nickname));
+        User user = request.toUser();
+        userRepository.save(user);
+        return user.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public void validateUser(String userid, String rawPassword) {
+        User user = getUserByUserid(userid);
+
+        if (user.isPasswordMismatch(rawPassword)) {
+            throw new AuthenticationException(MockbitErrorCode.ID_PASSWORD_INVALID);
+        }
+    }
+
+    @Transactional
+    public void updateUser(UserUpdateAppRequest request) {
+        User user = getUserByUserid(request.userid());
+
+        if (request.isNicknameExists() && !user.getNickname().getValue().equals(request.nickname())) {
+            if (userRepository.findByNickname(request.nickname()).isPresent()) {
+                throw new MockBitException(MockbitErrorCode.USER_NICKNAME_ALREADY_EXIST);
+            }
+            user.changeNickname(request.nickname());
+        }
+
+        if (request.password() != null && !request.password().isBlank()) {
+            user.changePassword(request.password());
+        }
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = getUserById(id);
+        userRepository.delete(user);
+        eventPublisher.publishEvent(new UserDeleteEvent(id));
+    }
+
+    @Transactional(readOnly = true)
+    public UserAppResponse findById(Long id) {
+        User user = getUserById(id);
+        return UserAppResponse.of(user);
+    }
+
+    private User getUserByUserid(String userid) {
+        return userRepository.findByUserid(userid)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ID_PASSWORD_INVALID));
+    }
+
+    private User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_RESOURCE_REQUEST));
     }
 }
 
