@@ -1,7 +1,7 @@
 package com.example.mockbit.user.presentation;
 
 import com.example.mockbit.common.auth.Login;
-import com.example.mockbit.event.application.response.UserAppResponse;
+import com.example.mockbit.user.application.response.UserAppResponse;
 import com.example.mockbit.user.application.UserService;
 import com.example.mockbit.user.application.request.UserJoinAppRequest;
 import com.example.mockbit.user.application.request.UserUpdateAppRequest;

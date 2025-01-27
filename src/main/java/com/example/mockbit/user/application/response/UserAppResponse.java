@@ -1,6 +1,5 @@
-package com.example.mockbit.event.application.response;
+package com.example.mockbit.user.application.response;
 
-import com.example.mockbit.event.domain.event.Password;
 import com.example.mockbit.user.domain.Nickname;
 import com.example.mockbit.user.domain.User;
 import com.example.mockbit.user.domain.Userid;

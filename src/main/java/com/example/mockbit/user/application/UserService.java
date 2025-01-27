@@ -3,7 +3,7 @@ package com.example.mockbit.user.application;
 import com.example.mockbit.common.exception.AuthenticationException;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
-import com.example.mockbit.event.application.response.UserAppResponse;
+import com.example.mockbit.user.application.response.UserAppResponse;
 import com.example.mockbit.user.application.request.UserJoinAppRequest;
 import com.example.mockbit.user.application.request.UserUpdateAppRequest;
 import com.example.mockbit.user.domain.User;

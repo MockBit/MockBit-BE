@@ -1,4 +1,4 @@
-package com.example.mockbit.event.domain.event;
+package com.example.mockbit.user.domain;
 
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;

@@ -1,7 +1,6 @@
 package com.example.mockbit.user.domain;
 
 import com.example.mockbit.common.domain.BaseEntity;
-import com.example.mockbit.event.domain.event.Password;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
