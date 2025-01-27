@@ -27,12 +27,6 @@ public class Userid {
         this.value = value;
     }
 
-//    public Userid(String value, UserRepository userRepository) {
-//        validateUserid(value);
-//        checkDuplicateUserid(value, userRepository);
-//        this.value = value;
-//    }
-
     private void validateUserid(String userid) {
         int useridLength = userid.length();
         if (useridLength < ID_MIN_NAME_LENGTH || useridLength > ID_MAX_NAME_LENGTH) {
@@ -42,10 +36,4 @@ public class Userid {
             );
         }
     }
-
-//    private void checkDuplicateUserid(String userid, UserRepository userRepository) {
-//        if (userRepository.findByUserid(userid).isPresent()) {
-//            throw new MockBitException(MockbitErrorCode.USER_ID_ALREADY_EXIST);
-//        }
-//    }
 }

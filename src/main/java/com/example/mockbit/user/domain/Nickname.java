@@ -27,12 +27,6 @@ public class Nickname {
         this.value = value;
     }
 
-//    public Nickname(String value, UserRepository userRepository) {
-//        validateNickname(value);
-//        checkDuplicateNickname(value, userRepository);
-//        this.value = value;
-//    }
-
     private void validateNickname(String nickname) {
         int nicknameLength = nickname.length();
         if (nicknameLength < NICKNAME_MIN_NAME_LENGTH || nicknameLength > NICKNAME_MAX_NAME_LENGTH) {
@@ -42,10 +36,4 @@ public class Nickname {
             );
         }
     }
-
-//    private void checkDuplicateNickname(String nickname, UserRepository userRepository) {
-//        if (userRepository.findByNickname(nickname).isPresent()) {
-//            throw new MockBitException(MockbitErrorCode.USER_NICKNAME_ALREADY_EXIST);
-//        }
-//    }
 }
