@@ -1,4 +1,4 @@
-package com.example.mockbit.common.config;
+package com.example.mockbit.common.infrastructure.redis;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

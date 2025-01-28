@@ -1,6 +1,7 @@
-package com.example.mockbit.common.config;
+package com.example.mockbit.common.infrastructure.websocket;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.BinaryMessage;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 @Configuration
 @Slf4j
+@RequiredArgsConstructor
 public class UpbitWebSocketConfig {
 
     private static final String UPBIT_WS_URL = "wss://api.upbit.com/websocket/v1";
