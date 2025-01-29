@@ -3,6 +3,7 @@ package com.example.mockbit.common.infrastructure.kafka;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +14,13 @@ public class KafkaConsumerService {
 
     private final RedisService redisService;
 
-    @KafkaListener(topics = "bitcoin-price", groupId = "mockbit-group")
+    @Value("${spring.data.redis.orders-key}")
+    private String ordersKey;
+
+    @KafkaListener(topics = "${spring.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeMessage(String message) {
         log.info("Consumed message from Kafka: {}", message);
 
-        String key = "current-btc-price";
-        redisService.saveData(key, message);
+        redisService.saveData(ordersKey, message);
     }
 }
