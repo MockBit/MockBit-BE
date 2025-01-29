@@ -10,7 +10,9 @@ spring:
     show-sql: true
 
   kafka:
-    topic: btccoin-price
+    topic: mockbit
+    key:
+      current-price-key: current-price
     bootstrap-servers: localhost:9092
     consumer:
       group-id: mockbit-group
@@ -23,6 +25,7 @@ spring:
 
   data:
     redis:
+      orders-key: Orders:current-btc-price
       host: localhost
       port: 6379
       password:
