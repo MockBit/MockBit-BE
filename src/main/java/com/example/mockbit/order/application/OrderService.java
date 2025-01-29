@@ -19,10 +19,10 @@ public class OrderService {
     public Order saveOrder(Long userId, String price, String btcPrice, String orderPrice, int leverage,
                            String position, String sellOrBuy) {
         Order order = Order.builder()
-                .id(Long.valueOf(userId + ":" + price))
+                .id(price + ":" + userId)
                 .price(price)
                 .userId(userId)
-                .createdAt(Instant.now())
+                .orderedAt(String.valueOf(Instant.now()))
                 .btcPrice(btcPrice)
                 .orderPrice(orderPrice)
                 .leverage(leverage)
