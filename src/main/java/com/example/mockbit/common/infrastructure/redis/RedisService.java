@@ -41,7 +41,7 @@ public class RedisService {
         return keys;
     }
 
-    public void saveData(String key, String value) {
+    public void saveData(String key, Object value) {
         redisTemplate.opsForValue().set(key, value);
     }
 

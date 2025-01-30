@@ -38,7 +38,7 @@ public class OrderService {
                 .build();
 
         String redisKey = String.format(REDIS_ORDER_KEY, price, userId);
-        redisService.saveData(redisKey, String.valueOf(order));
+        redisService.saveData(redisKey, order);
         log.info("지정가 주문이 등록되었습니다. - User: {}, Price: {}", userId, price);
 
         return order;
