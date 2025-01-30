@@ -31,7 +31,7 @@ public enum MockbitErrorCode {
     INTERNAL_SERVER_ERROR("서버에서 예기치 못한 오류가 발생했습니다. 잠시 후에 다시 시도해주세요"),
 
     /* Redis */
-    NO_REDIS_ORDER_KEY("존재하지 않는 주문입니다."),
+    NO_ORDER_RESOURCE("존재하지 않는 주문입니다."),
     INTERNAL_REDIS_ORDER_ERROR("주문 조회를 실패했습니다."),
     ORDER_ERROR("주문 처리 중 오류가 발생했습니다."),
     ORDER_NOT_FOUND("지정된 주문을 찾을 수 없습니다."),

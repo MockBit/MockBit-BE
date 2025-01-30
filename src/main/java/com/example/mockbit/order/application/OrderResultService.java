@@ -5,13 +5,14 @@ import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import com.example.mockbit.order.domain.Order;
 import com.example.mockbit.order.domain.OrderResult;
-import com.example.mockbit.order.domain.repository.OrderRepository;
 import com.example.mockbit.order.domain.repository.OrderResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,7 +21,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OrderResultService {
 
-    private final OrderRepository orderRepository;
     private final OrderResultRepository orderResultRepository;
     private final RedisService redisService;
 
@@ -36,17 +36,21 @@ public class OrderResultService {
             return;
         }
 
+        List<OrderResult> orderResults = new ArrayList<>();
+
         for (String key : matchingOrders) {
             Order order = Optional.ofNullable((Order) redisService.getData(key))
                     .orElseThrow(() -> new MockBitException(MockbitErrorCode.ORDER_NOT_FOUND));
 
-            OrderResult orderResult = OrderResult.fromOrder(order);
+            orderResults.add(OrderResult.fromOrder(order));
             redisService.deleteData(key);
-            try {
-                OrderResult savedOrder = orderResultRepository.save(orderResult);
-            } catch (Exception e) {
-                throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
-            }
+            log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
+        }
+
+        try {
+            orderResultRepository.saveAll(orderResults);
+        } catch (Exception e) {
+            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
         }
     }
 }
