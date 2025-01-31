@@ -8,9 +8,11 @@ import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.order.domain.repository.OrderResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,15 +26,20 @@ public class OrderResultService {
     private final OrderResultRepository orderResultRepository;
     private final RedisService redisService;
 
-    private static final String REDIS_ORDER_KEY = "Orders";
+    //@Value("${spring.data.redis.current-price-key}")
+    //private String currentPriceKey;
+    private final static String currentPriceKey = "current-btc-price";
+
+    @Value("${spring.data.redis.orders-key}")
+    private String redisOrdersKey;
 
     @Transactional
-    public void executeOrder(String currentStrPrice) {
-        String orderPattern = REDIS_ORDER_KEY + ":" + currentStrPrice + ":*";
+    public void executeOrder(String currentBtcPrice) {
+        String orderPattern = redisOrdersKey + ":" + currentBtcPrice + ":*";
         Set<String> matchingOrders = redisService.getKeys(orderPattern);
 
         if (matchingOrders.isEmpty()) {
-            log.info("{} 가격에 대한 주문 정보가 없습니다.", currentStrPrice);
+            log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
             return;
         }
 
@@ -52,5 +59,34 @@ public class OrderResultService {
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
         }
+    }
+
+    @Transactional
+    public OrderResult executeMarketOrder(Long userid, String orderPrice, int leverage, String position, String sellOrBuy) {
+        String currentBtcPrice = (String) redisService.getData(currentPriceKey);
+
+        if (currentBtcPrice == null) {
+            throw new MockBitException(MockbitErrorCode.ORDER_ERROR);
+        }
+
+        OrderResult orderResult = new OrderResult(
+                userid,
+                currentBtcPrice,
+                String.valueOf(Instant.now()),
+                currentBtcPrice,
+                orderPrice,
+                leverage,
+                position,
+                sellOrBuy
+        );
+
+        try {
+            orderResultRepository.save(orderResult);
+            log.info("현재가 주문이 완료되었습니다. - User: {}, Price: {}", userid, currentBtcPrice);
+        } catch (Exception e) {
+            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
+        }
+
+        return orderResult;
     }
 }

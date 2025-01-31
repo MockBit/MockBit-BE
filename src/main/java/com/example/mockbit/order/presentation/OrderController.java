@@ -34,7 +34,7 @@ public class OrderController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR);
+            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
         }
 
         Order order = orderService.saveOrder(

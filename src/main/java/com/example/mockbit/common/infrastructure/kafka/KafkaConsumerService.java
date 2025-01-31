@@ -21,12 +21,16 @@ public class KafkaConsumerService {
     @Value("${spring.data.redis.orders-key}")
     private String ordersKey;
 
+    @Value("${spring.data.redis.current-price-key}")
+    private String currentPriceKey;
+
     @KafkaListener(topics = "${spring.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeMessage(String message) {
         log.info("Consumed message from Kafka: {}", message);
 
         try {
             orderResultService.executeOrder(message);
+            redisService.saveData(currentPriceKey, message);
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
         }
