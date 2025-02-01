@@ -1,5 +1,6 @@
 package com.example.mockbit.order.application;
 
+import com.example.mockbit.account.application.AccountService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
@@ -25,6 +26,7 @@ public class OrderResultService {
 
     private final OrderResultRepository orderResultRepository;
     private final RedisService redisService;
+    private final AccountService accountService;
 
     //@Value("${spring.data.redis.current-price-key}")
     //private String currentPriceKey;
@@ -50,6 +52,7 @@ public class OrderResultService {
                     .orElseThrow(() -> new MockBitException(MockbitErrorCode.ORDER_NOT_FOUND));
 
             orderResults.add(OrderResult.fromOrder(order));
+            accountService.completeOrder(order);
             redisService.deleteData(key);
             log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
         }
@@ -82,6 +85,7 @@ public class OrderResultService {
 
         try {
             orderResultRepository.save(orderResult);
+            accountService.processMarketOrder(orderResult);
             log.info("현재가 주문이 완료되었습니다. - User: {}, Price: {}", userid, currentBtcPrice);
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);

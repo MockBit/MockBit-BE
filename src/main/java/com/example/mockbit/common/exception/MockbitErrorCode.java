@@ -30,12 +30,14 @@ public enum MockbitErrorCode {
     NO_RESOURCE_REQUEST("존재하지 않는 자원입니다."),
     INTERNAL_SERVER_ERROR("서버에서 예기치 못한 오류가 발생했습니다. 잠시 후에 다시 시도해주세요"),
 
-    /* Redis */
+    /* Order */
     NO_ORDER_RESOURCE("존재하지 않는 주문입니다."),
     INTERNAL_REDIS_ORDER_ERROR("주문 조회를 실패했습니다."),
     ORDER_ERROR("주문 처리 중 오류가 발생했습니다."),
     ORDER_NOT_FOUND("지정된 주문을 찾을 수 없습니다."),
     ORDER_DELETE_FAILED("주문을 삭제하는 데 실패했습니다."),
+    NOT_ENOUGH_BALANCE("주문 금액이 부족합니다."),
+    USER_NOT_FOUND("존재하지 않는 사용자입니다.")
     ;
 
     private final String message;

@@ -1,14 +1,15 @@
 package com.example.mockbit.user.application.request;
 
 import com.example.mockbit.user.domain.User;
+import com.example.mockbit.user.domain.Userid;
 
 public record UserJoinAppRequest(
-        String userid,
+        Userid userid,
         String nickname,
         String password
 ) {
 
     public User toUser() {
-        return User.createUser(userid, nickname, password);
+        return User.createUser(String.valueOf(userid), nickname, password);
     }
 }

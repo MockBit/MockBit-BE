@@ -1,5 +1,6 @@
 package com.example.mockbit.user.application;
 
+import com.example.mockbit.account.application.AccountService;
 import com.example.mockbit.common.exception.AuthenticationException;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
@@ -18,11 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AccountService accountService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long join(UserJoinAppRequest request) {
-        if (userRepository.findByUserid(request.userid()).isPresent()) {
+        if (userRepository.findByUserid(String.valueOf(request.userid())).isPresent()) {
             throw new MockBitException(MockbitErrorCode.USER_ID_ALREADY_EXIST);
         }
 
@@ -32,6 +34,8 @@ public class UserService {
 
         User user = request.toUser();
         userRepository.save(user);
+        accountService.createAccountForUser(user);
+
         return user.getId();
     }
 
