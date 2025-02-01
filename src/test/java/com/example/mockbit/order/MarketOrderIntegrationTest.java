@@ -1,16 +1,15 @@
 package com.example.mockbit.order;
 
-import com.example.mockbit.account.application.AccountService;
-import com.example.mockbit.account.domain.Account;
-import com.example.mockbit.account.domain.Btc;
-import com.example.mockbit.common.infrastructure.redis.RedisService;
-import com.example.mockbit.order.application.OrderResultService;
-import com.example.mockbit.order.application.request.MarketOrderAppRequest;
-import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.user.application.UserService;
 import com.example.mockbit.user.application.request.UserJoinAppRequest;
-import com.example.mockbit.user.domain.User;
+import com.example.mockbit.order.application.OrderResultService;
+import com.example.mockbit.order.application.request.MarketOrderAppRequest;
+import com.example.mockbit.order.application.response.MarketOrderAppResponse;
+import com.example.mockbit.order.domain.OrderResult;
+import com.example.mockbit.order.presentation.OrderResultController;
+import com.example.mockbit.user.presentation.UserController;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,19 +21,14 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({com.example.mockbit.user.presentation.UserController.class,
-        com.example.mockbit.order.presentation.OrderResultController.class})
+@WebMvcTest({OrderResultController.class, UserController.class})
 @ExtendWith(MockitoExtension.class)
 class MarketOrderIntegrationTest {
 
@@ -47,125 +41,64 @@ class MarketOrderIntegrationTest {
     @MockBean
     private OrderResultService orderResultService;
 
-    @MockBean
-    private AccountService accountService;
-
-    @MockBean
-    private RedisService redisService;
-
     @Autowired
     private ObjectMapper objectMapper;
 
     private MockHttpSession session;
-    private User testUser;
-    private Account testAccount;
-    private Btc testBtc;
-    private OrderResult testOrderResult;
 
     @BeforeEach
-    void setUp() {
-        // ✅ 테스트 유저 정보 생성
-        testUser = new User("testuser", "TestPassword1!", "TestNickname");
-
-        // ✅ 초기 Account & BTC 정보
-        testAccount = new Account(testUser, new BigDecimal("10000000"));
-        testBtc = new Btc(testUser);
-        testBtc.updateBtcBalance(BigDecimal.ZERO); // 초기 BTC 보유량: 0
-        doReturn(testAccount).when(accountService).getAccountByUserId(1L);
-        doReturn(testBtc).when(accountService).getBtcByUserId(1L);
-
-
-
-        // ✅ 시장가 주문 결과 예상값 설정
-        testOrderResult = new OrderResult(
-                1L,
-                "110000",
-                "2025-02-01T12:30:00Z",
-                "110000",
-                "1000000",
-                10,
-                "LONG",
-                "BUY"
-        );
-
+    void setUp() throws Exception {
         session = new MockHttpSession();
-        session.setAttribute("userId", 1L);
+        session.setAttribute("userId", 1L); // 회원가입 후 userId 1L 할당
     }
 
     @Test
-    /** ✅ 회원가입 요청 테스트 */
-    void 회원가입_테스트() throws Exception {
-        // ✅ 회원가입 요청 객체 생성
-        UserJoinAppRequest userJoinRequest = new UserJoinAppRequest(
-                testUser.getUserid(),
-                testUser.getNickname().getValue(),
-                testUser.getPassword().getValue()
-        );
+    void 회원가입_및_현재가_주문_테스트() throws Exception {
+        System.out.println("\n=== 회원가입 및 현재가 주문 테스트 시작 ===");
 
-        String requestBody = objectMapper.writeValueAsString(userJoinRequest);
+        // 회원가입 요청 Body 생성
+        UserJoinAppRequest joinRequest = new UserJoinAppRequest("testUser", "testPassword1!", "testNick");
 
-        // ✅ Mock 설정: 회원가입 시 User ID = 1 반환
+        // 회원가입 Mock 응답 설정 (userId 직접 할당)
         when(userService.join(any(UserJoinAppRequest.class))).thenReturn(1L);
 
-        // ✅ 회원가입 요청 수행
-        mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isOk());
-
-        // ✅ 회원가입 후 계좌(Account) & BTC 정보 조회
-        testAccount = accountService.getAccountByUserId(1L);
-        testBtc = accountService.getBtcByUserId(1L);
-
-        // ✅ 계좌 및 BTC 상태 출력
-        printAccountStatus("📌 회원가입 후 상태", testAccount, testBtc);
-    }
-
-    /** ✅ 계좌 및 BTC 상태 출력 메서드 */
-    private void printAccountStatus(String title, Account account, Btc btc) {
-        System.out.println("\n" + title);
-        System.out.println("✅ 계좌 잔액: " + (account != null ? account.getBalance() : "N/A"));
-        System.out.println("✅ BTC 잔고: " + (btc != null ? btc.getBtcBalance() : "N/A") + "\n");
-    }
-
-
-    /** ✅ 시장가 주문 요청 테스트 */
-    @Test
-    void 시장가_주문_테스트() throws Exception {
-        // ✅ 시장가 주문 요청 객체 생성
-        MarketOrderAppRequest marketRequest = MarketOrderAppRequest.builder()
-                .orderPrice(testOrderResult.getOrderPrice())
-                .leverage(testOrderResult.getLeverage())
-                .position(testOrderResult.getPosition())
-                .sellOrBuy(testOrderResult.getSellOrBuy())
+        // 현재가 주문 요청 Body 생성
+        MarketOrderAppRequest orderRequest = MarketOrderAppRequest.builder()
+                .orderPrice("1000000")
+                .leverage(30)
+                .position("LONG")
+                .sellOrBuy("BUY")
                 .build();
 
-        String marketRequestBody = objectMapper.writeValueAsString(marketRequest);
+        OrderResult mockOrderResult = new OrderResult(
+                1L, "1000000", "2024-01-30T12:00:00Z",
+                "1000000", "1000000", 30, "LONG", "BUY"
+        );
+        mockOrderResult.setId(1L); // ID 직접 할당
 
-        // ✅ Mock 설정: 주문 실행 시 예상된 OrderResult 반환
-        when(orderResultService.executeMarketOrder(any(Long.class), any(String.class), anyInt(), any(String.class), any(String.class)))
-                .thenReturn(testOrderResult);
+        // 주문 Mock 응답 설정
+        when(orderResultService.executeMarketOrder(anyLong(), any(), anyInt(), any(), any()))
+                .thenReturn(mockOrderResult);
 
-        // ✅ 주문 전 계좌 및 BTC 상태 출력
-        testAccount = accountService.getAccountByUserId(1L);
-        testBtc = accountService.getBtcByUserId(1L);
-        printAccountStatus("📌 주문 전 상태", testAccount, testBtc);
-
-        // ✅ 시장가 주문 요청 수행
-        mockMvc.perform(post("/api/orders/market/order")
-                        .session(session)
+        // 회원가입 요청
+        mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(marketRequestBody))
+                        .content(objectMapper.writeValueAsString(joinRequest)))
+                .andExpect(status().isOk());
+
+        // 현재가 주문 요청 실행
+        mockMvc.perform(post("/api/orders/market/order")
+                        .session(session) // 세션에 userId 포함
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orderRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(testOrderResult.getUserId()))
-                .andExpect(jsonPath("$.price").value(testOrderResult.getPrice()));
+                .andExpect(jsonPath("$.id").value(mockOrderResult.getId()))
+                .andExpect(jsonPath("$.userId").value(mockOrderResult.getUserId()))
+                .andExpect(jsonPath("$.orderPrice").value(mockOrderResult.getOrderPrice()))
+                .andExpect(jsonPath("$.position").value(mockOrderResult.getPosition()))
+                .andExpect(jsonPath("$.sellOrBuy").value(mockOrderResult.getSellOrBuy()))
+                .andDo(print());
 
-        // ✅ 주문 후 계좌(Account) 및 BTC 잔고 다시 조회
-        testAccount = accountService.getAccountByUserId(1L);
-        testBtc = accountService.getBtcByUserId(1L);
-
-        // ✅ 주문 후 상태 출력
-        printAccountStatus("📌 주문 후 상태", testAccount, testBtc);
+        System.out.println("=== 회원가입 및 현재가 주문 테스트 완료 ===\n");
     }
-
 }
