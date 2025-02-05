@@ -27,7 +27,7 @@ public class AccountService {
 
     @Transactional
     public void createAccountForUser(User user) {
-        Account account = new Account(user, BigDecimal.valueOf(10000000));
+        Account account = new Account(user);
         Btc btc = new Btc(user);
         accountRepository.save(account);
         btcRepository.save(btc);
