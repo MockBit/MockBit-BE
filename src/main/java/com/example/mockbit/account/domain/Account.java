@@ -28,9 +28,9 @@ public class Account extends BaseEntity {
     @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal balance;
 
-    public Account(User user, BigDecimal initialBalance) {
+    public Account(User user) {
         this.user = user;
-        this.balance = initialBalance;
+        this.balance = BigDecimal.valueOf(10000000);
     }
 
     public void deductBalance(BigDecimal amount) {
