@@ -37,7 +37,8 @@ public enum MockbitErrorCode {
     ORDER_NOT_FOUND("지정된 주문을 찾을 수 없습니다."),
     ORDER_DELETE_FAILED("주문을 삭제하는 데 실패했습니다."),
     NOT_ENOUGH_BALANCE("주문 금액이 부족합니다."),
-    USER_NOT_FOUND("존재하지 않는 사용자입니다.")
+    USER_NOT_FOUND("존재하지 않는 사용자입니다."),
+    NOT_EXISTS_CURRENT_PRICE("현재 가격을 가져오는데 실패했습니다.")
     ;
 
     private final String message;
