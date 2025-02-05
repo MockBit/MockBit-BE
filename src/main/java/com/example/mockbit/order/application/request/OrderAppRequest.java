@@ -17,7 +17,7 @@ public record OrderAppRequest(
 
     public Order toOrder(Long userId) {
         return Order.builder()
-                .id(String.format("%s:%d", price, userId))
+                .id(String.format("Orders:%s:%d", price, userId))
                 .price(price)
                 .userId(userId)
                 .orderedAt(String.valueOf(Instant.now()))
