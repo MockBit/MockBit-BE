@@ -1,0 +1,40 @@
+== 회원가입
+
+=== 회원가입 요청
+
+operation::createUser[snippets="http-request,request-body,request-fields,http-response"]
+
+==== [.red]#Exceptions#
+
+[source,json,options="nowrap"]
+
+[
+    {
+        "code":"USER_ID_LENGTH_INVALID",
+        "message":"사용자 아이디는 %d자 이상 %d자 이하만 가능합니다."
+    },
+    {
+        "code":"USER_ID_ALREADY_EXIST",
+        "message":"이미 존재하는 아이디입니다."
+    },
+    {
+        "code":"USER_PASSWORD_LENGTH_INVALID",
+        "message":"사용자 비밀번호는 %d자 이상 %d자 이하만 가능합니다."
+    },
+    {
+        "code":"USER_PASSWORD_FORMAT_INVALID",
+        "message":"비밀번호는 적어도 하나의 문자, 숫자, 특수문자가 포함되어야 합니다."
+    },
+    {
+        "code":"USER_NICKNAME_LENGTH_INVALID",
+        "message":"사용자 닉네임은 %d자 이상 %d자 이하만 가능합니다."
+    },
+    {
+        "code":"USER_NICKNAME_ALREADY_EXIST",
+        "message":"이미 존재하는 닉네임입니다."
+    },
+    {
+        "code":"USER_EMAIL_ADDRESS_FORMAT_INVALID",
+        "message":"지원하지 않는 이메일 형식입니다."
+    }
+]

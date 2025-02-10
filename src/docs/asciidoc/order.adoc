@@ -1,0 +1,51 @@
+== 주문
+
+=== 지정가 주문 요청
+
+operation::order[snippets="http-request,request-body,request-fields,http-response,request-cookies"]
+
+==== [.red]#Exceptions#
+
+[source,json,options="nowrap"]
+
+[
+    {
+        "code":"ONLY_FOR_MEMBER",
+        "message":"로그인이 필요한 서비스입니다."
+    },
+    {
+        "code":"REQUEST_LIMIT",
+        "message":"주문은 5000원 이상부터 가능합니다."
+    },
+    {
+        "code":"ORDER_ERROR",
+        "message":"주문 처리 중 오류가 발생했습니다."
+    },
+    {
+        "code":"NOT_ENOUGH_BALANCE",
+        "message":"주문 금액이 부족합니다."
+    }
+]
+
+=== 현재가 주문 요청
+
+operation::marketOrder[snippets="http-request,request-body,request-fields,http-response,request-cookies"]
+
+==== [.red]#Exceptions#
+
+[source,json,options="nowrap"]
+
+[
+    {
+        "code":"ONLY_FOR_MEMBER",
+        "message":"로그인이 필요한 서비스입니다."
+    },
+    {
+        "code":"ORDER_ERROR",
+        "message":"주문 처리 중 오류가 발생했습니다."
+    },
+    {
+        "code":"NOT_EXISTS_CURRENT_PRICE",
+        "message":"현재 가격을 가져오는데 실패했습니다."
+    }
+]
