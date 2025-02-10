@@ -1,7 +1,10 @@
 package com.example.mockbit.order.application;
 
 import com.example.mockbit.account.application.AccountService;
+import com.example.mockbit.common.exception.MockBitException;
+import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
+import com.example.mockbit.order.application.request.OrderAppRequest;
 import com.example.mockbit.order.domain.Order;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +70,7 @@ public class OrderService {
     public void deleteOrderById(String id) {
         Order order = (Order) redisService.getData(id);
         if (order == null) {
-            throw new RuntimeException("주문을 찾을 수 없습니다.");
+            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
         }
 
         redisService.deleteData(id);
@@ -80,5 +83,34 @@ public class OrderService {
 
         Long userId = Long.valueOf(parts[1]);
         accountService.cancelOrder(userId, BigDecimal.valueOf(Long.parseLong(order.getOrderPrice())));
+    }
+
+    @Transactional
+    public Order updateOrder(String orderId, OrderAppRequest request, Long userId) {
+        Order existingOrder = (Order) redisService.getData(orderId);
+
+        if (existingOrder == null) {
+            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
+        }
+        accountService.cancelOrder(userId, BigDecimal.valueOf(Long.parseLong(existingOrder.getOrderPrice())));
+        redisService.deleteData(orderId);
+        String newOrderId = String.format(REDIS_ORDER_KEY, request.price(), userId);
+        Order newOrder = Order.builder()
+                .id(newOrderId)
+                .price(request.price())
+                .userId(userId)
+                .orderedAt(String.valueOf(Instant.now()))
+                .btcPrice(request.btcPrice())
+                .orderPrice(request.orderPrice())
+                .leverage(request.leverage())
+                .position(request.position())
+                .sellOrBuy(request.sellOrBuy())
+                .build();
+
+        redisService.saveData(newOrderId, newOrder);
+        accountService.processOrder(userId, BigDecimal.valueOf(Long.parseLong(newOrder.getOrderPrice())));
+        log.info("주문이 수정되었습니다. - 기존 ID: {}, 새로운 ID: {}, 가격: {}", orderId, newOrderId, request.price());
+
+        return newOrder;
     }
 }

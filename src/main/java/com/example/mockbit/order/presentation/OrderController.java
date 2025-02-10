@@ -50,7 +50,7 @@ public class OrderController {
         return ResponseEntity.ok(OrderAppResponse.from(order));
     }
 
-    @GetMapping("/user_{id}")
+    @GetMapping("/user_{userid}")
     public ResponseEntity<List<OrderAppResponse>> getUserOrders() {
         Long userId = (Long) session.getAttribute("userId");
 
@@ -63,5 +63,25 @@ public class OrderController {
         return ResponseEntity.ok(
                 orders.stream().map(OrderAppResponse::from).collect(Collectors.toList())
         );
+    }
+
+    @DeleteMapping("/cancel/order_{orderId}")
+    public ResponseEntity<OrderAppResponse> cancelOrder(@PathVariable String orderId) {
+        Order order = orderService.findOrderById(orderId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
+        orderService.deleteOrderById(orderId);
+
+        return ResponseEntity.ok(OrderAppResponse.from(order));
+    }
+
+    @PutMapping("/update/order_{orderId}")
+    public ResponseEntity<OrderAppResponse> updateOrder(
+            @PathVariable String orderId,
+            @Valid @RequestBody OrderAppRequest request
+    ) {
+        Long userId = (Long) session.getAttribute("userId");
+        Order updatedOrder = orderService.updateOrder(orderId, request, userId);
+
+        return ResponseEntity.ok(OrderAppResponse.from(updatedOrder));
     }
 }
