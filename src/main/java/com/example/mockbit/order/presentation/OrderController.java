@@ -3,6 +3,7 @@ package com.example.mockbit.order.presentation;
 import com.example.mockbit.common.auth.Login;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
+import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderService;
 import com.example.mockbit.order.application.request.OrderAppRequest;
 import com.example.mockbit.order.application.response.OrderAppResponse;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
+@EnableConfigurationProperties(CookieProperties.class)
 public class OrderController {
 
     private final OrderService orderService;

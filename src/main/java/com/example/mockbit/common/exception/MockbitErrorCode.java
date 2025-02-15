@@ -7,6 +7,8 @@ public enum MockbitErrorCode {
     /* Login */
     ID_PASSWORD_INVALID("아이디 또는 비밀번호가 일치하지 않습니다."),
     ONLY_FOR_MEMBER("로그인이 필요한 서비스입니다."),
+    TOKEN_NOT_FOUND("토큰이 존재하지 않습니다."),
+    TOKEN_NOT_VALID("토큰이 유효하지 않습니다."),
 
     /* Signup */
     USER_ID_LENGTH_INVALID("사용자 아이디는 %d자 이상 %d자 이하만 가능합니다."),
