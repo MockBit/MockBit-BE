@@ -41,7 +41,7 @@ public class OrderResultService {
         Set<String> matchingOrders = redisService.getKeys(orderPattern);
 
         if (matchingOrders.isEmpty()) {
-            log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
+            // log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
             return;
         }
 

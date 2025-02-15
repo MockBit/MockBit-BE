@@ -51,7 +51,7 @@ public class UpbitWebSocketHandler extends TextWebSocketHandler {
         try {
             byte[] payload = message.getPayload().array();
             String json = new String(payload, StandardCharsets.UTF_8);
-            log.info("Received binary message: " + json);
+            // log.info("Received binary message: " + json);
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(json);

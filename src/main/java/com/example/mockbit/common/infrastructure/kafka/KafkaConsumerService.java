@@ -26,7 +26,7 @@ public class KafkaConsumerService {
 
     @KafkaListener(topics = "${spring.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeMessage(String message) {
-        log.info("Consumed message from Kafka: {}", message);
+        // log.info("Consumed message from Kafka: {}", message);
 
         try {
             orderResultService.executeOrder(message);

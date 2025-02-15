@@ -14,6 +14,6 @@ public class KafkaProducerService {
 
     public void sendMessage(String topic, String key, String value) {
         kafkaTemplate.send(topic, key, value);
-        log.info("Produced message from Upbit: {}", value);
+        // log.info("Produced message from Upbit: {}", value);
     }
 }
