@@ -25,10 +25,28 @@ spring:
 
   data:
     redis:
-      orders-key: Orders:current-btc-price
+      orders-key: Orders
+      current-price-key: current-btc-price
       host: localhost
       port: 6379
       password:
 
   websocket:
     upbit-url: wss://api.upbit.com/websocket/v1
+
+cors:
+  max-age: 3600
+  allowed-origins: http://localhost:3000
+
+security:
+  jwt:
+    token:
+      secret-key: skdmeejEKJdkDjklDlkj123DKLJ3kDkeDkDKQMEOD1D90D8dE
+      expire-length: 604800000 # 1주일
+
+cookie:
+  http-only: false
+  secure: false
+  path: /
+  same-site: none
+  max-age: 7D
