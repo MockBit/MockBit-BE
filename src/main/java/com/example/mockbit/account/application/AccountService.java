@@ -55,10 +55,6 @@ public class AccountService {
         BigDecimal btcAmount = orderPrice.multiply(leverage)
                 .divide(btcPrice, 8, RoundingMode.HALF_UP);
 
-        if (account.getBalance().compareTo(orderPrice) < 0) {
-            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
-        }
-
         account.deductBalance(orderPrice);
         btc.updateBtcBalance(btcAmount);
     }

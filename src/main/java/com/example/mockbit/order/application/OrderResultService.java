@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,10 @@ public class OrderResultService {
 
     @Transactional
     public OrderResult executeMarketOrder(Long userid, String orderPrice, int leverage, String position, String sellOrBuy) {
+        if (accountService.getAccountByUserId(userid).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
+            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
+        }
+
         String currentBtcPrice = (String) redisService.getData(currentPriceKey);
 
         if (currentBtcPrice == null) {
