@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Getter
@@ -26,12 +27,46 @@ public class Btc extends BaseEntity {
     @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal btcBalance;
 
+    @Column(nullable = false, precision = 18, scale = 8)
+    private BigDecimal avgEntryPrice;
+
+    @Column(nullable = false, precision = 18, scale = 8)
+    private BigDecimal avgLeverage;
+
+    @Column(nullable = false, length = 10)
+    private String position;
+
     public Btc(User user) {
         this.user = user;
-        this.btcBalance = BigDecimal.ZERO;
+        this.btcBalance = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.avgEntryPrice = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.avgLeverage = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.position = "NONE";
     }
 
     public void updateBtcBalance(BigDecimal btcAmount) {
-        this.btcBalance = btcBalance.add(btcAmount);
+        if (btcAmount == null) {
+            throw new IllegalArgumentException("BTC 추가량이 null일 수 없습니다.");
+        }
+
+        BigDecimal newBalance = btcBalance.add(btcAmount).setScale(8, RoundingMode.HALF_UP);
+
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("BTC 잔액은 0 미만이 될 수 없습니다.");
+        }
+
+        this.btcBalance = newBalance;
+    }
+
+    public void updatePosition(String position) {
+        this.position = position;
+    }
+
+    public void updateAvgEntryPrice(BigDecimal avgEntryPrice) {
+        this.avgEntryPrice = avgEntryPrice;
+    }
+
+    public void updateAvgLeverage(BigDecimal avgLeverage) {
+        this.avgLeverage = avgLeverage;
     }
 }
