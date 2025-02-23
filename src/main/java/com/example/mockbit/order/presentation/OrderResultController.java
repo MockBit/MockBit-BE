@@ -1,5 +1,6 @@
 package com.example.mockbit.order.presentation;
 
+import com.example.mockbit.common.auth.application.AuthService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.properties.CookieProperties;
@@ -7,13 +8,13 @@ import com.example.mockbit.order.application.OrderResultService;
 import com.example.mockbit.order.application.request.MarketOrderAppRequest;
 import com.example.mockbit.order.application.response.MarketOrderAppResponse;
 import com.example.mockbit.order.domain.OrderResult;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,14 +27,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class OrderResultController {
 
     private final OrderResultService orderResultService;
-    private final HttpSession session;
+    private final AuthService authService;
 
     @PostMapping("/order")
     public ResponseEntity<MarketOrderAppResponse> marketOrder(
-            @Valid @RequestBody MarketOrderAppRequest request
+            @Valid @RequestBody MarketOrderAppRequest request,
+            @CookieValue(name = "accessToken", required = false) String token
     ) {
-
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = authService.findUserIdByJWT(token);
 
         if (userId == null) {
             throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);

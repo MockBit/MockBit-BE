@@ -41,10 +41,6 @@ public class AccountService {
         return btcRepository.findByUserId(userId);
     }
 
-    /**
-     * 매수 시
-     * @param orderResult
-     */
     @Transactional
     public void processMarketOrder(OrderResult orderResult) {
         User user = userRepository.findById(orderResult.getUserId())
@@ -54,33 +50,23 @@ public class AccountService {
         Btc btc = btcRepository.findByUserId(user.getId());
 
         BigDecimal orderPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getOrderPrice()));
-        int leverage = orderResult.getLeverage();
         BigDecimal btcPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getPrice()));
-        BigDecimal btcAmount = orderPrice.multiply(BigDecimal.valueOf(leverage)) // 레버리지 적용
-                .divide(btcPrice, 8, RoundingMode.HALF_UP);
 
-        account.deductBalance(orderPrice);
-        buyBtc(btc, btcAmount, btcPrice, leverage, orderResult.getPosition());
-    }
+        if ("BUY".equalsIgnoreCase(orderResult.getSellOrBuy())) {
+            int leverage = orderResult.getLeverage();
+            BigDecimal btcAmount = orderPrice.multiply(BigDecimal.valueOf(leverage))
+                    .divide(btcPrice, 8, RoundingMode.HALF_UP);
 
-    /**
-     * 매도 시
-     * @param orderResult
-     */
-    @Transactional
-    public void processMarketOrderSell(OrderResult orderResult) {
-        User user = userRepository.findById(orderResult.getUserId())
-                .orElseThrow(() -> new MockBitException(MockbitErrorCode.USER_NOT_FOUND));
+            account.deductBalance(orderPrice);
+            buyBtc(btc, btcAmount, btcPrice, leverage, orderResult.getPosition());
+        } else if ("SELL".equalsIgnoreCase(orderResult.getSellOrBuy())) {
+            BigDecimal btcAmount = orderPrice.divide(btcPrice, 8, RoundingMode.HALF_UP);
 
-        Account account = accountRepository.findByUserId(user.getId());
-        Btc btc = btcRepository.findByUserId(user.getId());
-
-        BigDecimal orderPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getOrderPrice()));
-        BigDecimal btcPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getPrice()));
-        BigDecimal btcAmount = orderPrice.divide(btcPrice, 8, RoundingMode.HALF_UP);
-
-        account.refundBalance(orderPrice);
-        sellBtc(btc, btcAmount);
+            account.refundBalance(orderPrice);
+            sellBtc(btc, btcAmount);
+        } else {
+            throw new MockBitException(MockbitErrorCode.INVALID_ORDER_TYPE);
+        }
     }
 
     @Transactional
@@ -90,17 +76,8 @@ public class AccountService {
     }
 
     @Transactional
-    public void completeOrder(Order order) {
-        Btc btc = btcRepository.findByUserId(order.getUserId());
-
-        int leverage = order.getLeverage();
-        BigDecimal orderPrice = BigDecimal.valueOf(Long.parseLong(order.getOrderPrice()));
-        BigDecimal btcPrice = BigDecimal.valueOf(Long.parseLong(order.getPrice()));
-
-        BigDecimal btcAmount = orderPrice.multiply(BigDecimal.valueOf(leverage))
-                .divide(btcPrice, 8, BigDecimal.ROUND_HALF_UP);
-
-        btc.updateBtcBalance(btcAmount);
+    public void completeOrder(OrderResult orderResult) {
+        processMarketOrder(orderResult);
     }
 
     @Transactional

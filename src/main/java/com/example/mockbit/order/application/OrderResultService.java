@@ -9,14 +9,14 @@ import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.order.domain.repository.OrderResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,39 +36,48 @@ public class OrderResultService {
     @Value("${spring.data.redis.orders-key}")
     private String redisOrdersKey;
 
-    @Transactional
     public void executeOrder(String currentBtcPrice) {
         String orderPattern = redisOrdersKey + ":" + currentBtcPrice + ":*";
         Set<String> matchingOrders = redisService.getKeys(orderPattern);
 
         if (matchingOrders.isEmpty()) {
-            // log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
+            log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
             return;
         }
 
-        List<OrderResult> orderResults = new ArrayList<>();
-
         for (String key : matchingOrders) {
-            Order order = Optional.ofNullable((Order) redisService.getData(key))
-                    .orElseThrow(() -> new MockBitException(MockbitErrorCode.ORDER_NOT_FOUND));
-
-            orderResults.add(OrderResult.fromOrder(order));
-            accountService.completeOrder(order);
-            redisService.deleteData(key);
-            log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
+            ((OrderResultService) AopContext.currentProxy()).processSingleOrder(key);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void processSingleOrder(String key) {
+        Order order = Optional.ofNullable((Order) redisService.getData(key))
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ORDER_NOT_FOUND));
+        OrderResult orderResult = OrderResult.fromOrder(order);
 
         try {
-            orderResultRepository.saveAll(orderResults);
+            accountService.completeOrder(orderResult);
+            redisService.deleteData(key);
+            orderResultRepository.save(orderResult);
+            log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
         } catch (Exception e) {
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
+            try {
+                accountService.cancelOrder(order.getUserId(), new BigDecimal(order.getOrderPrice()));
+                log.info("주문 처리 실패로 인한 환불이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
+            } catch (Exception refundEx) {
+                log.error("환불 처리 중 오류 발생 - User: {}, Price: {}. 오류: {}", order.getUserId(), order.getPrice(), refundEx.getMessage());
+            }
+            log.error("지정가 주문 처리 중 오류 발생 - User: {}, Price: {}. 오류: {}", order.getUserId(), order.getPrice(), e.getMessage());
         }
     }
 
     @Transactional
     public OrderResult executeMarketOrder(Long userid, String orderPrice, int leverage, String position, String sellOrBuy) {
-        if (accountService.getAccountByUserId(userid).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
-            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
+        if (sellOrBuy.equals("BUY")) {
+            if (accountService.getAccountByUserId(userid).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
+                throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
+            }
         }
 
         String currentBtcPrice = (String) redisService.getData(currentPriceKey);
