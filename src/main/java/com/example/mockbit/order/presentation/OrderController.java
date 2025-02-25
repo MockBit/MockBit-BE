@@ -1,12 +1,15 @@
 package com.example.mockbit.order.presentation;
 
 import com.example.mockbit.common.auth.Login;
+import com.example.mockbit.common.auth.application.AuthService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderService;
 import com.example.mockbit.order.application.request.OrderAppRequest;
+import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.OrderAppResponse;
+import com.example.mockbit.order.application.response.UpdateOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -23,18 +26,20 @@ import java.util.stream.Collectors;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api/orders")
+@RequestMapping("/api/limit/orders")
 @EnableConfigurationProperties(CookieProperties.class)
 public class OrderController {
 
     private final OrderService orderService;
     private final HttpSession session;
+    private final AuthService authService;
 
-    @PostMapping("/order")
+    @PostMapping("/register")
     public ResponseEntity<OrderAppResponse> order(
-            @Valid @RequestBody OrderAppRequest request
+            @Valid @RequestBody OrderAppRequest request,
+            @CookieValue(name = "accessToken", required = false) String token
     ) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = authService.findUserIdByJWT(token);
 
         if (userId == null) {
             throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
@@ -53,9 +58,15 @@ public class OrderController {
         return ResponseEntity.ok(OrderAppResponse.from(order));
     }
 
-    @GetMapping("/user_{userid}")
-    public ResponseEntity<List<OrderAppResponse>> getUserOrders() {
-        Long userId = (Long) session.getAttribute("userId");
+    @GetMapping("/pending/orders")
+    public ResponseEntity<List<OrderAppResponse>> getUserOrders(
+            @CookieValue(name = "accessToken", required = false) String token
+    ) {
+        Long userId = authService.findUserIdByJWT(token);
+
+        if (userId == null) {
+            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
+        }
 
         List<Order> orders = orderService.findOrderByUserId(userId);
 
@@ -68,8 +79,17 @@ public class OrderController {
         );
     }
 
-    @DeleteMapping("/cancel/order_{orderId}")
-    public ResponseEntity<OrderAppResponse> cancelOrder(@PathVariable String orderId) {
+    @DeleteMapping("/cancel/orders/{orderId}")
+    public ResponseEntity<OrderAppResponse> cancelOrder(
+            @PathVariable String orderId,
+            @CookieValue(name = "accessToken", required = false) String token
+    ) {
+        Long userId = authService.findUserIdByJWT(token);
+
+        if (userId == null) {
+            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
+        }
+
         Order order = orderService.findOrderById(orderId)
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
         orderService.deleteOrderById(orderId);

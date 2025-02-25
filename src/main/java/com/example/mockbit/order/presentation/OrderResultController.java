@@ -22,14 +22,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api/orders/market")
+@RequestMapping("/api/market/orders")
 @EnableConfigurationProperties(CookieProperties.class)
 public class OrderResultController {
 
     private final OrderResultService orderResultService;
     private final AuthService authService;
 
-    @PostMapping("/order")
+    @PostMapping("/register")
     public ResponseEntity<MarketOrderAppResponse> marketOrder(
             @Valid @RequestBody MarketOrderAppRequest request,
             @CookieValue(name = "accessToken", required = false) String token
