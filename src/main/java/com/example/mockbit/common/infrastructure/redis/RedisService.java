@@ -44,8 +44,16 @@ public class RedisService {
         return keys;
     }
 
+    public Long setGeneratedValue(String key) {
+        return redisTemplate.opsForValue().increment(key, 1);
+    }
+
     public void saveData(String key, Object value) {
         redisTemplate.opsForValue().set(key, value);
+    }
+
+    public void saveListData(String key, Object value) {
+        redisTemplate.opsForList().leftPush(key, value);
     }
 
     public Object getData(String key) {
@@ -68,6 +76,10 @@ public class RedisService {
         }
 
         return results;
+    }
+
+    public void removeListData(String key, Object value) {
+        redisTemplate.opsForList().remove(key, 1, value);
     }
 
     public void deleteData(String key) {
