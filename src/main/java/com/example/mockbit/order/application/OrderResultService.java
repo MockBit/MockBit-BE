@@ -17,8 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Optional;
-import java.util.Set;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -29,36 +28,26 @@ public class OrderResultService {
     private final RedisService redisService;
     private final AccountService accountService;
 
-    //@Value("${spring.data.redis.current-price-key}")
-    //private String currentPriceKey;
-    private final static String currentPriceKey = "current-btc-price";
+    private final static String CURRENT_PRICE_KEY = "current-btc-price";
 
     @Value("${spring.data.redis.orders-key}")
     private String redisOrdersKey;
 
     public void executeOrder(String currentBtcPrice) {
-        String orderPattern = redisOrdersKey + ":" + currentBtcPrice + ":*";
-        Set<String> matchingOrders = redisService.getKeys(orderPattern);
+        // 추후 메서드 기능 작성
+        List<Order> orders =
 
-        if (matchingOrders.isEmpty()) {
-            log.info("{} 가격에 대한 주문 정보가 없습니다.", currentBtcPrice);
-            return;
-        }
-
-        for (String key : matchingOrders) {
-            ((OrderResultService) AopContext.currentProxy()).processSingleOrder(key);
+        for (Order order : orders) {
+            ((OrderResultService) AopContext.currentProxy()).processSingleOrder(order);
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processSingleOrder(String key) {
-        Order order = Optional.ofNullable((Order) redisService.getData(key))
-                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ORDER_NOT_FOUND));
+    public void processSingleOrder(Order order) {
         OrderResult orderResult = OrderResult.fromOrder(order);
 
         try {
             accountService.completeOrder(orderResult);
-            redisService.deleteData(key);
             orderResultRepository.save(orderResult);
             log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
         } catch (Exception e) {
@@ -80,7 +69,7 @@ public class OrderResultService {
             }
         }
 
-        String currentBtcPrice = (String) redisService.getData(currentPriceKey);
+        String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
 
         if (currentBtcPrice == null) {
             throw new MockBitException(MockbitErrorCode.ORDER_ERROR);
