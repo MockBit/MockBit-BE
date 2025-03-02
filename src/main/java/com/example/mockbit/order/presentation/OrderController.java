@@ -11,7 +11,6 @@ import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.OrderAppResponse;
 import com.example.mockbit.order.application.response.UpdateOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class OrderController {
 
     private final OrderService orderService;
-    private final HttpSession session;
     private final AuthService authService;
 
     @PostMapping("/register")
@@ -45,15 +44,7 @@ public class OrderController {
             throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
         }
 
-        Order order = orderService.saveOrder(
-                userId,
-                request.price(),
-                request.btcPrice(),
-                request.orderPrice(),
-                request.leverage(),
-                request.position(),
-                request.sellOrBuy()
-        );
+        Order order = orderService.saveOrder(userId, request);
 
         return ResponseEntity.ok(OrderAppResponse.from(order));
     }
@@ -92,19 +83,29 @@ public class OrderController {
 
         Order order = orderService.findOrderById(orderId)
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
+
+        if (!Objects.equals(order.getUserId(), userId)) {
+            throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
+        }
         orderService.deleteOrderById(orderId);
 
         return ResponseEntity.ok(OrderAppResponse.from(order));
     }
 
     @PutMapping("/update/order_{orderId}")
-    public ResponseEntity<OrderAppResponse> updateOrder(
+    public ResponseEntity<UpdateOrderAppResponse> updateOrder(
             @PathVariable String orderId,
-            @Valid @RequestBody OrderAppRequest request
+            @CookieValue(name = "accessToken", required = false) String token,
+            @Valid @RequestBody UpdateOrderAppRequest request
     ) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = authService.findUserIdByJWT(token);
+
+        if (userId == null) {
+            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
+        }
+
         Order updatedOrder = orderService.updateOrder(orderId, request, userId);
 
-        return ResponseEntity.ok(OrderAppResponse.from(updatedOrder));
+        return ResponseEntity.ok(UpdateOrderAppResponse.from(updatedOrder));
     }
 }

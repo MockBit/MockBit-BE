@@ -1,10 +1,13 @@
 package com.example.mockbit.order.application;
 
 import com.example.mockbit.account.application.AccountService;
+import com.example.mockbit.account.domain.Account;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
+import com.example.mockbit.common.infrastructure.kafka.KafkaProducerService;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import com.example.mockbit.order.application.request.OrderAppRequest;
+import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.domain.Order;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,78 +29,28 @@ public class OrderService {
 
     private final RedisService redisService;
     private final AccountService accountService;
+    private final KafkaProducerService kafkaProducerService;
 
-    private static final String REDIS_ORDER_KEY = "Orders:%s:%d";
+    private static final String REDIS_USER_ORDER_KEY = "User_Orders:%s"; // %s = userId; value = List OrderId
+    private static final String REDIS_ORDER_DETAIL_KEY = "Order_Details:%s"; // %s = orderId; value = Hash Order
+    private static final String KAFKA_LIMIT_ORDERS_TOPIC = "limit-orders";
+    private static final String KAFKA_UPDATE_ORDERS_TOPIC = "update-limit-orders";
+    private static final String KAFKA_CANCEL_ORDERS_TOPIC = "cancel-limit-orders";
 
     @Transactional
-    public Order saveOrder(Long userId, String price, String btcPrice, String orderPrice, int leverage,
-                           String position, String sellOrBuy) {
-        String redisKey = String.format(REDIS_ORDER_KEY, price, userId);
+    public Order saveOrder(Long userId, OrderAppRequest request) {
+        BigDecimal orderPrice = new BigDecimal(request.orderPrice());
+        Account account = accountService.getAccountByUserId(userId);
+        if (account.getBalance().compareTo(orderPrice) < 0) {
+            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
+        }
+
+        String orderId = String.valueOf(redisService.setGeneratedValue("orderId"));
+        String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
+        String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
+
         Order order = Order.builder()
-                .id(redisKey)
-                .price(price)
-                .userId(userId)
-                .orderedAt(String.valueOf(Instant.now()))
-                .btcPrice(btcPrice)
-                .orderPrice(orderPrice)
-                .leverage(leverage)
-                .position(position)
-                .sellOrBuy(sellOrBuy)
-                .build();
-
-        redisService.saveData(redisKey, order);
-        accountService.processOrder(userId, BigDecimal.valueOf(Long.parseLong(order.getOrderPrice())));
-        log.info("지정가 주문이 등록되었습니다. - User: {}, Price: {}", userId, price);
-
-        return order;
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Order> findOrderById(String id) {
-        return Optional.ofNullable((Order) redisService.getData(id));
-    }
-
-    @Transactional(readOnly = true)
-    public List<Order> findOrderByUserId(Long userId) {
-        String pattern = String.format(REDIS_ORDER_KEY, "*", userId);
-        Set<String> orderKeys = redisService.getKeys(pattern);
-
-        return orderKeys.stream()
-                .map(key -> (Order) redisService.getData(key))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public void deleteOrderById(String id) {
-        Order order = (Order) redisService.getData(id);
-        if (order == null) {
-            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
-        }
-
-        redisService.deleteData(id);
-
-        String[] parts = id.replaceFirst("Orders:", "").split(":");
-
-        if (parts.length < 2) {
-            throw new RuntimeException("주문 ID 형식이 올바르지 않습니다.");
-        }
-
-        Long userId = Long.valueOf(parts[1]);
-        accountService.cancelOrder(userId, BigDecimal.valueOf(Long.parseLong(order.getOrderPrice())));
-    }
-
-    @Transactional
-    public Order updateOrder(String orderId, OrderAppRequest request, Long userId) {
-        Order existingOrder = (Order) redisService.getData(orderId);
-
-        if (existingOrder == null) {
-            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
-        }
-        accountService.cancelOrder(userId, BigDecimal.valueOf(Long.parseLong(existingOrder.getOrderPrice())));
-        redisService.deleteData(orderId);
-        String newOrderId = String.format(REDIS_ORDER_KEY, request.price(), userId);
-        Order newOrder = Order.builder()
-                .id(newOrderId)
+                .id(orderId)
                 .price(request.price())
                 .userId(userId)
                 .orderedAt(String.valueOf(Instant.now()))
@@ -107,9 +61,74 @@ public class OrderService {
                 .sellOrBuy(request.sellOrBuy())
                 .build();
 
-        redisService.saveData(newOrderId, newOrder);
-        accountService.processOrder(userId, BigDecimal.valueOf(Long.parseLong(newOrder.getOrderPrice())));
-        log.info("주문이 수정되었습니다. - 기존 ID: {}, 새로운 ID: {}, 가격: {}", orderId, newOrderId, request.price());
+        redisService.saveListData(redisUserOrderKey, orderId);
+        redisService.saveData(redisOrderDetailKey, order);
+        kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), order.toString());
+        accountService.processOrder(userId, orderPrice);
+
+        return order;
+    }
+
+    public Optional<Order> findOrderById(String orderId) {
+        String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
+        return Optional.ofNullable((Order) redisService.getData(redisOrderDetailKey));
+    }
+
+    public List<Order> findOrderByUserId(Long userId) {
+        String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
+        Set<Object> orderIds = redisService.getSetMembers(redisUserOrderKey);
+
+        return orderIds.stream()
+                .map(orderId -> String.format(REDIS_ORDER_DETAIL_KEY, orderId))
+                .map(key -> (Order) redisService.getData(key))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteOrderById(String orderId) {
+        String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
+        Order order = (Order) redisService.getData(redisOrderDetailKey);
+        if (order == null) {
+            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
+        }
+
+        Long userId = order.getUserId();
+        String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
+
+        redisService.removeListData(redisUserOrderKey, orderId);
+        redisService.deleteData(redisOrderDetailKey);
+        kafkaProducerService.sendMessage(KAFKA_CANCEL_ORDERS_TOPIC, order.getPrice(), order.toString());
+        accountService.cancelOrder(userId, new BigDecimal(order.getOrderPrice()));
+    }
+
+    @Transactional
+    public Order updateOrder(String orderId, UpdateOrderAppRequest request, Long userId) {
+        String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
+        Order existingOrder = (Order) redisService.getData(redisOrderDetailKey);
+        if (existingOrder == null) {
+            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
+        }
+        if (!Objects.equals(existingOrder.getUserId(), userId)) {
+            throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
+        }
+
+        accountService.cancelOrder(userId, new BigDecimal(existingOrder.getOrderPrice()));
+
+        Order newOrder = Order.builder()
+                .id(orderId)
+                .price(request.price())
+                .userId(userId)
+                .orderedAt(String.valueOf(Instant.now()))
+                .btcPrice(request.btcPrice())
+                .orderPrice(request.orderPrice())
+                .leverage(request.leverage())
+                .position(request.position())
+                .sellOrBuy(request.sellOrBuy())
+                .build();
+
+        redisService.saveData(redisOrderDetailKey, newOrder);
+        kafkaProducerService.sendMessage(KAFKA_UPDATE_ORDERS_TOPIC, request.price(), newOrder.toString());
+        accountService.processOrder(userId, new BigDecimal(newOrder.getOrderPrice()));
 
         return newOrder;
     }

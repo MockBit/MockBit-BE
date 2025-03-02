@@ -41,7 +41,8 @@ public enum MockbitErrorCode {
     NOT_ENOUGH_BALANCE("주문 금액이 부족합니다."),
     USER_NOT_FOUND("존재하지 않는 사용자입니다."),
     NOT_EXISTS_CURRENT_PRICE("현재 가격을 가져오는데 실패했습니다."),
-    INVALID_ORDER_TYPE("올바르지 않은 주문 종류입니다.")
+    INVALID_ORDER_TYPE("올바르지 않은 주문 종류입니다."),
+    USER_ID_NOT_EQUALS_ORDER("해당 사용자 외에는 주문을 설정할 수 없습니다.")
     ;
 
     private final String message;

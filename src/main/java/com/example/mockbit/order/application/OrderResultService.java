@@ -30,34 +30,17 @@ public class OrderResultService {
 
     private final static String CURRENT_PRICE_KEY = "current-btc-price";
 
-    @Value("${spring.data.redis.orders-key}")
-    private String redisOrdersKey;
-
-    public void executeOrder(String currentBtcPrice) {
-        // 추후 메서드 기능 작성
-        List<Order> orders =
-
-        for (Order order : orders) {
-            ((OrderResultService) AopContext.currentProxy()).processSingleOrder(order);
-        }
-    }
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleOrder(Order order) {
         OrderResult orderResult = OrderResult.fromOrder(order);
-
         try {
             accountService.completeOrder(orderResult);
             orderResultRepository.save(orderResult);
             log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
         } catch (Exception e) {
-            try {
-                accountService.cancelOrder(order.getUserId(), new BigDecimal(order.getOrderPrice()));
-                log.info("주문 처리 실패로 인한 환불이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
-            } catch (Exception refundEx) {
-                log.error("환불 처리 중 오류 발생 - User: {}, Price: {}. 오류: {}", order.getUserId(), order.getPrice(), refundEx.getMessage());
-            }
-            log.error("지정가 주문 처리 중 오류 발생 - User: {}, Price: {}. 오류: {}", order.getUserId(), order.getPrice(), e.getMessage());
+            accountService.cancelOrder(order.getUserId(), new BigDecimal(order.getOrderPrice()));
+            log.error("지정가 주문 처리 실패 - User: {}, Price: {}, Error: {}", order.getUserId(), order.getPrice(), e.getMessage());
+            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
         }
     }
 
