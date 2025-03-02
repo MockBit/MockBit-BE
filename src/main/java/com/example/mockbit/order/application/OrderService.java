@@ -31,7 +31,7 @@ public class OrderService {
     private final AccountService accountService;
     private final KafkaProducerService kafkaProducerService;
 
-    private static final String REDIS_USER_ORDER_KEY = "User_Orders:%s"; // %s = userId; value = List OrderId
+    private static final String REDIS_USER_ORDER_KEY = "Orders:%s"; // %s = userId; value = List OrderId
     private static final String REDIS_ORDER_DETAIL_KEY = "Order_Details:%s"; // %s = orderId; value = Hash Order
     private static final String KAFKA_LIMIT_ORDERS_TOPIC = "limit-orders";
     private static final String KAFKA_UPDATE_ORDERS_TOPIC = "update-limit-orders";

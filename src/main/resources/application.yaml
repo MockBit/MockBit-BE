@@ -10,7 +10,11 @@ spring:
     show-sql: true
 
   kafka:
-    topic: mockbit
+    topic:
+      btc-price: mockbit
+      create-limit-order: limit-orders
+      cancel-limit-order: cancel-limit-orders
+      update-limit-order: update-limit-orders
     key:
       current-price-key: current-price
     bootstrap-servers: localhost:9092
@@ -29,7 +33,7 @@ spring:
       current-price-key: current-btc-price
       host: localhost
       port: 6379
-      password:
+      password: wlscjf9687!A
 
   websocket:
     upbit-url: wss://api.upbit.com/websocket/v1

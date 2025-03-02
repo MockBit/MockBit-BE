@@ -24,7 +24,7 @@ public class UpbitWebSocketHandler extends TextWebSocketHandler {
     private final KafkaProducerService kafkaProducerService;
     private static final String UPBIT_WS_URL = "wss://api.upbit.com/websocket/v1";
 
-    @Value("${spring.kafka.topic}")
+    @Value("${spring.kafka.topic.btc-price}")
     private String topic;
 
     @Value("${spring.kafka.key.current-price-key}")

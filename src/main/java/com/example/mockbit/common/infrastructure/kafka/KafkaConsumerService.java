@@ -4,7 +4,6 @@ import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import com.example.mockbit.order.application.OrderResultService;
-import com.example.mockbit.order.application.OrderService;
 import com.example.mockbit.order.domain.Order;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ public class KafkaConsumerService {
 
     private final RedisService redisService;
     private final OrderResultService orderResultService;
-    private final OrderService orderService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${spring.data.redis.current-price-key}")
@@ -53,7 +51,7 @@ public class KafkaConsumerService {
         }
     }
 
-    @KafkaListener(topics = "limit-orders", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "${spring.kafka.topic.create-limit-order}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeLimitOrders(String message) {
         try {
             Order order = objectMapper.readValue(message, Order.class);
@@ -63,7 +61,7 @@ public class KafkaConsumerService {
         }
     }
 
-    @KafkaListener(topics = "update-limit-orders", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "${spring.kafka.topic.update-limit-order}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeUpdateOrder(String message) {
         try {
             Order updatedOrder = objectMapper.readValue(message, Order.class);
@@ -77,7 +75,7 @@ public class KafkaConsumerService {
         }
     }
 
-    @KafkaListener(topics = "cancel-limit-orders", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "${spring.kafka.topic.cancel-limit-order}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeCancelOrder(String message) {
         try {
             Order order = objectMapper.readValue(message, Order.class);
