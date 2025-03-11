@@ -6,7 +6,6 @@ import com.example.mockbit.account.domain.repository.AccountRepository;
 import com.example.mockbit.account.domain.repository.BtcRepository;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
-import com.example.mockbit.order.domain.Order;
 import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.user.domain.User;
 import com.example.mockbit.user.domain.repository.UserRepository;
@@ -113,6 +112,7 @@ public class AccountService {
         btc.updateAvgEntryPrice(newAvgEntryPrice);
         btc.updateAvgLeverage(weightedLeverage);
         btc.updatePosition(position);
+        btc.updateLiquidationPrice();
 
         btcRepository.save(btc);
     }
@@ -149,6 +149,9 @@ public class AccountService {
             btc.updatePosition("NONE");
             btc.updateAvgEntryPrice(BigDecimal.ZERO);
             btc.updateAvgLeverage(BigDecimal.ZERO);
+            btc.resetLiquidationPrice();
+        } else {
+            btc.updateLiquidationPrice();
         }
 
         btcRepository.save(btc);
