@@ -86,11 +86,19 @@ public class Btc extends BaseEntity {
                 this.liquidationPrice = this.avgEntryPrice.multiply(one.add(leverageFactor))
                         .setScale(8, RoundingMode.HALF_UP);
             } else {
-                this.liquidationPrice = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+                this.liquidationPrice = null;
             }
         } else {
-            this.liquidationPrice = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+            this.liquidationPrice = null;
         }
+    }
+
+    public void executeLiquidation() {
+        this.btcBalance = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.avgEntryPrice = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.avgLeverage = BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
+        this.position = "NONE";
+        this.liquidationPrice = null;
     }
 
     public void resetLiquidationPrice() {
