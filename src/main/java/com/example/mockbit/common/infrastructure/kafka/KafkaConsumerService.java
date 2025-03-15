@@ -1,5 +1,6 @@
 package com.example.mockbit.common.infrastructure.kafka;
 
+import com.example.mockbit.account.application.BtcService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ public class KafkaConsumerService {
 
     private final RedisService redisService;
     private final OrderResultService orderResultService;
+    private final BtcService btcService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${spring.data.redis.current-price-key}")
@@ -37,6 +40,13 @@ public class KafkaConsumerService {
 
         try {
             redisService.saveData(currentPriceKey, currentBtcPrice);
+            BigDecimal btcPrice = new BigDecimal(currentBtcPrice);
+
+            List<Long> userIds = btcService.getAllUserIdsWithBtc();
+            for (Long userId : userIds) {
+                btcService.updateProfitAndCheckLiquidation(userId, btcPrice);
+            }
+
             List<Order> matchedOrders = priceOrderMap.getOrDefault(currentBtcPrice, new ArrayList<>());
             for (Order order : matchedOrders) {
                 orderResultService.processSingleOrder(order);
