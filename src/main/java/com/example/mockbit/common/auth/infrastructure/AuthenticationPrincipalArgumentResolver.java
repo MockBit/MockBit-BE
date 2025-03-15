@@ -18,11 +18,14 @@ public class AuthenticationPrincipalArgumentResolver implements HandlerMethodArg
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.hasParameterAnnotation(Login.class) && parameter.getParameterType().equals(Long.class);
+        return parameter.hasParameterAnnotation(Login.class) &&
+                parameter.getParameterType().equals(Long.class);
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(
+            MethodParameter parameter, ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         String jwt = authenticationExtractor.extract(request, authService.getTokenName());
         return authService.findUserIdByJWT(jwt);
