@@ -1,5 +1,6 @@
 package com.example.mockbit.order.presentation;
 
+import com.example.mockbit.common.auth.Login;
 import com.example.mockbit.common.auth.application.AuthService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
@@ -32,11 +33,12 @@ public class OrderResultController {
     @PostMapping("/register")
     public ResponseEntity<MarketOrderAppResponse> marketOrder(
             @Valid @RequestBody MarketOrderAppRequest request,
-            @CookieValue(name = "accessToken", required = false) String token
+            @CookieValue(name = "accessToken", required = false) String token,
+            @Login Long userId
     ) {
-        Long userId = authService.findUserIdByJWT(token);
+        Long tokenUserId = authService.findUserIdByJWT(token);
 
-        if (userId == null) {
+        if (userId == null && tokenUserId == null) {
             throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
         }
 

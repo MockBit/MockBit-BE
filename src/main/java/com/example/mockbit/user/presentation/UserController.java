@@ -9,7 +9,6 @@ import com.example.mockbit.user.application.response.UserAppResponse;
 import com.example.mockbit.user.application.UserService;
 import com.example.mockbit.user.application.request.UserJoinAppRequest;
 import com.example.mockbit.user.application.request.UserUpdateAppRequest;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -83,16 +82,18 @@ public class UserController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> checkLoginStatus(@CookieValue(name = "accessToken", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> checkLoginStatus(
+            @CookieValue(name = "accessToken", required = false) String token,
+            @Login Long userId
+    ) {
         Map<String, Object> response = new HashMap<>();
 
-        if (token == null || token.isBlank()) {
+        if ((token == null || token.isBlank()) && userId == null) {
             response.put("isLoggedIn", false);
             return ResponseEntity.ok(response);
         }
 
         try {
-            Long userId = authService.findUserIdByJWT(token);
             log.info("token"+userId);
             response.put("isLoggedIn", true);
             response.put("userId", userId);
