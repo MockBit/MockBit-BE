@@ -95,7 +95,7 @@ public class OrderController {
         return ResponseEntity.ok(OrderAppResponse.from(order));
     }
 
-    @PutMapping("/update/order_{orderId}")
+    @PutMapping("/update/orders/{orderId}")
     public ResponseEntity<UpdateOrderAppResponse> updateOrder(
             @PathVariable String orderId,
             @CookieValue(name = "accessToken", required = false) String token,

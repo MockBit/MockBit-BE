@@ -105,6 +105,7 @@ public class OrderService {
     public Order updateOrder(String orderId, UpdateOrderAppRequest request, Long userId) {
         String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
         Order existingOrder = (Order) redisService.getData(redisOrderDetailKey);
+
         if (existingOrder == null) {
             throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
         }
