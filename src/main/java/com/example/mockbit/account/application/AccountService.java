@@ -36,8 +36,8 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
-    public Btc getBtcByUserId(Long userId) {
-        return btcRepository.findByUserId(userId);
+    public BigDecimal getBalanceByUserId(Long userId) {
+        return getAccountByUserId(userId).getBalance();
     }
 
     @Transactional
