@@ -40,6 +40,13 @@ public class RealTimeProfitWebSocketHandler extends TextWebSocketHandler {
 
     public String extractUserId(WebSocketSession session) {
         String query = Objects.requireNonNull(session.getUri()).getQuery();
-        return query.split("=")[1];
+        if (query == null || !query.contains("=")) {
+            throw new IllegalArgumentException("Invalid query format: userId is required");
+        }
+        String[] parts = query.split("=");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Invalid query format: userId is missing");
+        }
+        return parts[1];
     }
 }
