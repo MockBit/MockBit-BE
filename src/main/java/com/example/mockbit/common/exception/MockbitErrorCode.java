@@ -36,6 +36,8 @@ public enum MockbitErrorCode {
     NO_ORDER_RESOURCE("존재하지 않는 주문입니다."),
     INTERNAL_REDIS_ORDER_ERROR("주문 조회를 실패했습니다."),
     ORDER_ERROR("주문 처리 중 오류가 발생했습니다."),
+    LIMIT_ORDER_ERROR("지정가 주문 중 오류가 발생했습니다."),
+    MARKET_ORDER_ERROR("시장가 주문 중 오류가 발생했습니다."),
     ORDER_NOT_FOUND("지정된 주문을 찾을 수 없습니다."),
     ORDER_DELETE_FAILED("주문을 삭제하는 데 실패했습니다."),
     NOT_ENOUGH_BALANCE("주문 금액이 부족합니다."),

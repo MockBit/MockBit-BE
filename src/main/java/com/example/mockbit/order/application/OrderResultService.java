@@ -9,15 +9,12 @@ import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.order.domain.repository.OrderResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.aop.framework.AopContext;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.List;
 
 @Service
 @Slf4j
@@ -40,7 +37,7 @@ public class OrderResultService {
         } catch (Exception e) {
             accountService.cancelOrder(order.getUserId(), new BigDecimal(order.getOrderPrice()));
             log.error("지정가 주문 처리 실패 - User: {}, Price: {}, Error: {}", order.getUserId(), order.getPrice(), e.getMessage());
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
+            throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
     }
 
@@ -55,7 +52,7 @@ public class OrderResultService {
         String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
 
         if (currentBtcPrice == null) {
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR);
+            throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
         }
 
         OrderResult orderResult = new OrderResult(
@@ -74,7 +71,7 @@ public class OrderResultService {
             accountService.processMarketOrder(orderResult);
             log.info("현재가 주문이 완료되었습니다. - User: {}, Price: {}", userid, currentBtcPrice);
         } catch (Exception e) {
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
+            throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
 
         return orderResult;
