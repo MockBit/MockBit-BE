@@ -10,6 +10,7 @@ import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.user.domain.User;
 import com.example.mockbit.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AccountService {
 
@@ -44,12 +46,11 @@ public class AccountService {
     public void processMarketOrder(OrderResult orderResult) {
         User user = userRepository.findById(orderResult.getUserId())
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.USER_NOT_FOUND));
-
         Account account = accountRepository.findByUserId(user.getId());
         Btc btc = btcRepository.findByUserId(user.getId());
 
-        BigDecimal orderPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getOrderPrice()));
-        BigDecimal btcPrice = BigDecimal.valueOf(Long.parseLong(orderResult.getPrice()));
+        BigDecimal orderPrice = new BigDecimal(orderResult.getOrderPrice());
+        BigDecimal btcPrice = new BigDecimal(orderResult.getPrice());
 
         if ("BUY".equalsIgnoreCase(orderResult.getSellOrBuy())) {
             int leverage = orderResult.getLeverage();
