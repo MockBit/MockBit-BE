@@ -35,7 +35,8 @@ public class AccountService {
     }
 
     public Account getAccountByUserId(Long userId) {
-        return accountRepository.findByUserId(userId);
+        return accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public BigDecimal getBalanceByUserId(Long userId) {
@@ -46,8 +47,10 @@ public class AccountService {
     public void processMarketOrder(OrderResult orderResult) {
         User user = userRepository.findById(orderResult.getUserId())
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.USER_NOT_FOUND));
-        Account account = accountRepository.findByUserId(user.getId());
-        Btc btc = btcRepository.findByUserId(user.getId());
+        Account account = accountRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
+        Btc btc = btcRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.BTC_NOT_FOUND));
 
         BigDecimal orderPrice = new BigDecimal(orderResult.getOrderPrice());
         BigDecimal btcPrice = new BigDecimal(orderResult.getPrice());
@@ -71,7 +74,8 @@ public class AccountService {
 
     @Transactional
     public void processOrder(Long userId, BigDecimal orderPrice) {
-        Account account = accountRepository.findByUserId(userId);
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.USER_NOT_FOUND));
         account.deductBalance(orderPrice);
     }
 
@@ -82,7 +86,8 @@ public class AccountService {
 
     @Transactional
     public void cancelOrder(Long userId, BigDecimal orderPrice) {
-        Account account = accountRepository.findByUserId(userId);
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
         account.refundBalance(orderPrice);
     }
 

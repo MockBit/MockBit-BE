@@ -29,7 +29,8 @@ public class BtcService {
 
     @Transactional
     public void updateProfitAndCheckLiquidation(Long userId, BigDecimal currentBtcPrice) {
-        Btc btc = btcRepository.findByUserId(userId);
+        Btc btc = btcRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
         if (btc == null || btc.getBtcBalance().compareTo(BigDecimal.ZERO) <= 0) {
             return;
         }
@@ -59,7 +60,8 @@ public class BtcService {
 
     @Transactional
     public void liquidatePosition(Long userId, BigDecimal currentBtcPrice) {
-        Btc btc = btcRepository.findByUserId(userId);
+        Btc btc = btcRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
         if (btc == null) {
             throw new MockBitException(MockbitErrorCode.USER_NOT_FOUND);
         }

@@ -6,11 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
 public interface BtcRepository extends JpaRepository<Btc, Long> {
-    Btc findByUserId(Long userId);
+    Optional<Btc> findByUserId(Long userId);
 
     @Query("SELECT b.user.id FROM Btc b WHERE b.btcBalance > 0")
     List<Long> findAllUserIdsWithBtcBalance();
