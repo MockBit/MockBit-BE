@@ -26,7 +26,7 @@ public enum MockbitErrorCode {
     REQUEST_METHOD_NOT_SUPPORTED("지원하지 않는 요청입니다."),
     REQUEST_NOT_READABLE("읽을 수 없는 요청입니다."),
     REQUEST_OVER("주문 금액이 주문 가능 금액보다 큽니다."),
-    REQUEST_EMPTY("주문 금액은 5000원 이상부터 가능합니다."),
+    REQUEST_EMPTY("요청이 존재하지 않습니다."),
 
     /* System */
     NO_RESOURCE_REQUEST("존재하지 않는 자원입니다."),
@@ -46,7 +46,8 @@ public enum MockbitErrorCode {
     BTC_NOT_FOUND("존재하지 않는 BTC 계좌입니다."),
     NOT_EXISTS_CURRENT_PRICE("현재 가격을 가져오는데 실패했습니다."),
     INVALID_ORDER_TYPE("올바르지 않은 주문 종류입니다."),
-    USER_ID_NOT_EQUALS_ORDER("해당 사용자 외에는 주문을 설정할 수 없습니다.")
+    USER_ID_NOT_EQUALS_ORDER("해당 사용자 외에는 주문을 설정할 수 없습니다."),
+    ORDER_UNDER_MINIMUM("최소 주문 금액은 5천원입니다.")
     ;
 
     private final String message;

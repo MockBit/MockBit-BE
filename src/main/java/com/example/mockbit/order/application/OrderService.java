@@ -45,6 +45,10 @@ public class OrderService {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
         }
 
+        if (Integer.parseInt(request.orderPrice()) < 5000) {
+            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
+        }
+
         String orderId = String.valueOf(redisService.setGeneratedValue("orderId"));
         String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
         String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
@@ -111,6 +115,10 @@ public class OrderService {
         }
         if (!Objects.equals(existingOrder.getUserId(), userId)) {
             throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
+        }
+
+        if (Integer.parseInt(request.orderPrice()) < 5000) {
+            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
         }
 
         accountService.cancelOrder(userId, new BigDecimal(existingOrder.getOrderPrice()));

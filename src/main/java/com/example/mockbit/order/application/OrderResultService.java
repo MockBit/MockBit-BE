@@ -43,6 +43,10 @@ public class OrderResultService {
 
     @Transactional
     public OrderResult executeMarketOrder(Long userid, String orderPrice, int leverage, String position, String sellOrBuy) {
+        if (Integer.parseInt(orderPrice) < 5000) {
+            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
+        }
+
         if (sellOrBuy.equals("BUY")) {
             if (accountService.getAccountByUserId(userid).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
                 throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
