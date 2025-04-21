@@ -6,8 +6,10 @@ import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderResultService;
-import com.example.mockbit.order.application.request.MarketOrderAppRequest;
-import com.example.mockbit.order.application.response.MarketOrderAppResponse;
+import com.example.mockbit.order.application.request.BuyMarketOrderAppRequest;
+import com.example.mockbit.order.application.request.SellMarketOrderAppRequest;
+import com.example.mockbit.order.application.response.BuyMarketOrderAppResponse;
+import com.example.mockbit.order.application.response.SellMarketOrderAppResponse;
 import com.example.mockbit.order.domain.OrderResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +32,9 @@ public class OrderResultController {
     private final OrderResultService orderResultService;
     private final AuthService authService;
 
-    @PostMapping("/register")
-    public ResponseEntity<MarketOrderAppResponse> marketOrder(
-            @Valid @RequestBody MarketOrderAppRequest request,
+    @PostMapping("/buy")
+    public ResponseEntity<BuyMarketOrderAppResponse> buyMarketOrder(
+            @Valid @RequestBody BuyMarketOrderAppRequest request,
             @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
@@ -42,7 +44,7 @@ public class OrderResultController {
             throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
         }
 
-        OrderResult orderResult = orderResultService.executeMarketOrder(
+        OrderResult orderResult = orderResultService.executeBuyMarketOrder(
                 userId,
                 request.orderPrice(),
                 request.leverage(),
@@ -50,6 +52,28 @@ public class OrderResultController {
                 request.sellOrBuy()
         );
 
-        return ResponseEntity.ok(MarketOrderAppResponse.from(orderResult));
+        return ResponseEntity.ok(BuyMarketOrderAppResponse.from(orderResult));
+    }
+
+    @PostMapping("/sell")
+    public ResponseEntity<SellMarketOrderAppResponse> sellMarketOrder(
+            @Valid @RequestBody SellMarketOrderAppRequest request,
+            @CookieValue(name = "accessToken", required = false) String token,
+            @Login Long userId
+    ) {
+        Long tokenUserId = authService.findUserIdByJWT(token);
+
+        if (userId == null && tokenUserId == null) {
+            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
+        }
+
+        OrderResult orderResult = orderResultService.executeSellMarketOrder(
+                userId,
+                request.btcAmount(),
+                request.position(),
+                request.sellOrBuy()
+        );
+
+        return ResponseEntity.ok(SellMarketOrderAppResponse.from(orderResult));
     }
 }

@@ -1,6 +1,7 @@
 package com.example.mockbit.order.application;
 
 import com.example.mockbit.account.application.AccountService;
+import com.example.mockbit.account.application.BtcService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
@@ -24,6 +25,7 @@ public class OrderResultService {
     private final OrderResultRepository orderResultRepository;
     private final RedisService redisService;
     private final AccountService accountService;
+    private final BtcService btcService;
 
     private final static String CURRENT_PRICE_KEY = "current-btc-price";
 
@@ -42,15 +44,13 @@ public class OrderResultService {
     }
 
     @Transactional
-    public OrderResult executeMarketOrder(Long userid, String orderPrice, int leverage, String position, String sellOrBuy) {
+    public OrderResult executeBuyMarketOrder(Long userId, String orderPrice, int leverage, String position, String sellOrBuy) {
         if (Integer.parseInt(orderPrice) < 5000) {
             throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
         }
 
-        if (sellOrBuy.equals("BUY")) {
-            if (accountService.getAccountByUserId(userid).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
-                throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
-            }
+        if (accountService.getAccountByUserId(userId).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
+            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
         }
 
         String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
@@ -60,7 +60,7 @@ public class OrderResultService {
         }
 
         OrderResult orderResult = new OrderResult(
-                userid,
+                userId,
                 currentBtcPrice,
                 String.valueOf(Instant.now()),
                 currentBtcPrice,
@@ -73,11 +73,53 @@ public class OrderResultService {
         try {
             orderResultRepository.save(orderResult);
             accountService.processMarketOrder(orderResult);
-            log.info("현재가 주문이 완료되었습니다. - User: {}, Price: {}", userid, currentBtcPrice);
+            log.info("현재가 주문 구매가 완료되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
 
         return orderResult;
+    }
+
+    @Transactional
+    public OrderResult executeSellMarketOrder(Long userId, String btcAmount, String position, String sellOrBuy) {
+        if (btcService.getBtcByUserId(userId).getBtcBalance().compareTo(new BigDecimal(btcAmount)) < 0) {
+            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BTC);
+        }
+
+        String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
+
+        if (currentBtcPrice == null) {
+            throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
+        }
+
+        String orderPrice = convertBtcToKRW(btcAmount);
+
+        OrderResult orderResult = new OrderResult(
+                userId,
+                currentBtcPrice,
+                String.valueOf(Instant.now()),
+                currentBtcPrice,
+                orderPrice,
+                0,
+                position,
+                sellOrBuy
+        );
+
+        try {
+            orderResultRepository.save(orderResult);
+            accountService.processMarketOrder(orderResult);
+            log.info("현재가 주문 구매가 완료되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
+        } catch (Exception e) {
+            throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
+        }
+
+        return orderResult;
+    }
+
+    public String convertBtcToKRW(String btcAmount) {
+        BigDecimal btc = new BigDecimal(btcAmount);
+
+        return String.valueOf(btc);
     }
 }
