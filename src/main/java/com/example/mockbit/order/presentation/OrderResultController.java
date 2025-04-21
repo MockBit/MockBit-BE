@@ -30,19 +30,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class OrderResultController {
 
     private final OrderResultService orderResultService;
-    private final AuthService authService;
 
     @PostMapping("/buy")
     public ResponseEntity<BuyMarketOrderAppResponse> buyMarketOrder(
             @Valid @RequestBody BuyMarketOrderAppRequest request,
-            @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         OrderResult orderResult = orderResultService.executeBuyMarketOrder(
                 userId,
@@ -58,14 +51,8 @@ public class OrderResultController {
     @PostMapping("/sell")
     public ResponseEntity<SellMarketOrderAppResponse> sellMarketOrder(
             @Valid @RequestBody SellMarketOrderAppRequest request,
-            @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         OrderResult orderResult = orderResultService.executeSellMarketOrder(
                 userId,

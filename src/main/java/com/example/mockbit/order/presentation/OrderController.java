@@ -31,19 +31,12 @@ import java.util.stream.Collectors;
 public class OrderController {
 
     private final OrderService orderService;
-    private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<OrderAppResponse> order(
             @Valid @RequestBody OrderAppRequest request,
-            @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         Order order = orderService.saveOrder(userId, request);
 
@@ -52,14 +45,8 @@ public class OrderController {
 
     @GetMapping("/pending/orders")
     public ResponseEntity<List<OrderAppResponse>> getUserOrders(
-            @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         List<Order> orders = orderService.findOrderByUserId(userId);
 
@@ -75,14 +62,8 @@ public class OrderController {
     @DeleteMapping("/cancel/orders/{orderId}")
     public ResponseEntity<OrderAppResponse> cancelOrder(
             @PathVariable String orderId,
-            @CookieValue(name = "accessToken", required = false) String token,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         Order order = orderService.findOrderById(orderId)
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
@@ -98,15 +79,9 @@ public class OrderController {
     @PutMapping("/update/orders/{orderId}")
     public ResponseEntity<UpdateOrderAppResponse> updateOrder(
             @PathVariable String orderId,
-            @CookieValue(name = "accessToken", required = false) String token,
             @Valid @RequestBody UpdateOrderAppRequest request,
             @Login Long userId
     ) {
-        Long tokenUserId = authService.findUserIdByJWT(token);
-
-        if (userId == null && tokenUserId == null) {
-            throw new MockBitException(MockbitErrorCode.ONLY_FOR_MEMBER);
-        }
 
         Order updatedOrder = orderService.updateOrder(orderId, request, userId);
 

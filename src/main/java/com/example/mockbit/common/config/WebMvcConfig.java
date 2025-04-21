@@ -4,6 +4,7 @@ import com.example.mockbit.common.auth.application.AuthService;
 import com.example.mockbit.common.auth.infrastructure.AdminInterceptor;
 import com.example.mockbit.common.auth.infrastructure.AuthenticationExtractor;
 import com.example.mockbit.common.auth.infrastructure.AuthenticationPrincipalArgumentResolver;
+import com.example.mockbit.common.auth.infrastructure.UserInterceptor;
 import com.example.mockbit.common.properties.CorsProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,6 +40,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminInterceptor())
                 .addPathPatterns("/api/admin/**");
+
+        registry.addInterceptor(userInterceptor())
+                .addPathPatterns("/api/limit/orders/**", "/api/market/orders/**");
     }
 
     @Override
@@ -49,6 +53,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Bean
     public AdminInterceptor adminInterceptor() {
         return new AdminInterceptor(authService, authenticationExtractor);
+    }
+
+    @Bean
+    public UserInterceptor userInterceptor() {
+        return new UserInterceptor(authService, authenticationExtractor);
     }
 
     @Bean
