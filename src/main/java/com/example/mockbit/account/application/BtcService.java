@@ -101,6 +101,11 @@ public class BtcService {
         return false;
     }
 
+    public Btc getBtcByUserId(Long userId) {
+        return btcRepository.findByUserId(userId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.BTC_NOT_FOUND));
+    }
+
     public List<Long> getAllUserIdsWithBtc() {
         return btcRepository.findAllUserIdsWithBtcBalance();
     }
