@@ -104,4 +104,8 @@ public class Btc extends BaseEntity {
     public void resetLiquidationPrice() {
         this.liquidationPrice = null;
     }
+
+    public boolean isBtcEnough(BigDecimal amount) {
+        return btcBalance.compareTo(amount) >= 0;
+    }
 }

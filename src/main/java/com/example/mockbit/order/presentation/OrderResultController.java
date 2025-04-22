@@ -36,16 +36,8 @@ public class OrderResultController {
             @Valid @RequestBody BuyMarketOrderAppRequest request,
             @Login Long userId
     ) {
-
-        OrderResult orderResult = orderResultService.executeBuyMarketOrder(
-                userId,
-                request.orderPrice(),
-                request.leverage(),
-                request.position(),
-                request.sellOrBuy()
-        );
-
-        return ResponseEntity.ok(BuyMarketOrderAppResponse.from(orderResult));
+        BuyMarketOrderAppResponse response = orderResultService.executeBuyMarketOrder(userId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/sell")
@@ -53,14 +45,7 @@ public class OrderResultController {
             @Valid @RequestBody SellMarketOrderAppRequest request,
             @Login Long userId
     ) {
-
-        OrderResult orderResult = orderResultService.executeSellMarketOrder(
-                userId,
-                request.btcAmount(),
-                request.position(),
-                request.sellOrBuy()
-        );
-
-        return ResponseEntity.ok(SellMarketOrderAppResponse.from(orderResult));
+        SellMarketOrderAppResponse response = orderResultService.executeSellMarketOrder(userId, request);
+        return ResponseEntity.ok(response);
     }
 }

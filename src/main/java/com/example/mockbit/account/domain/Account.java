@@ -34,13 +34,15 @@ public class Account extends BaseEntity {
     }
 
     public void deductBalance(BigDecimal amount) {
-        if (balance.compareTo(amount) < 0) {
-            throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
-        }
+        isBalanceEnough(amount);
         this.balance = this.balance.subtract(amount);
     }
 
     public void refundBalance(BigDecimal amount) {
         this.balance = this.balance.add(amount);
+    }
+
+    public boolean isBalanceEnough(BigDecimal amount) {
+        return balance.compareTo(amount) >= 0;
     }
 }

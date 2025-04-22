@@ -5,6 +5,10 @@ import com.example.mockbit.account.application.BtcService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
+import com.example.mockbit.order.application.request.BuyMarketOrderAppRequest;
+import com.example.mockbit.order.application.request.SellMarketOrderAppRequest;
+import com.example.mockbit.order.application.response.BuyMarketOrderAppResponse;
+import com.example.mockbit.order.application.response.SellMarketOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import com.example.mockbit.order.domain.OrderResult;
 import com.example.mockbit.order.domain.repository.OrderResultRepository;
@@ -44,12 +48,12 @@ public class OrderResultService {
     }
 
     @Transactional
-    public OrderResult executeBuyMarketOrder(Long userId, String orderPrice, int leverage, String position, String sellOrBuy) {
-        if (Integer.parseInt(orderPrice) < 5000) {
+    public BuyMarketOrderAppResponse executeBuyMarketOrder(Long userId, BuyMarketOrderAppRequest request) {
+        if (Integer.parseInt(request.orderPrice()) < 5000) {
             throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
         }
 
-        if (accountService.getAccountByUserId(userId).getBalance().compareTo(new BigDecimal(orderPrice)) < 0) {
+        if (!accountService.getAccountByUserId(userId).isBalanceEnough(new BigDecimal(request.orderPrice()))) {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
         }
 
@@ -64,10 +68,10 @@ public class OrderResultService {
                 currentBtcPrice,
                 String.valueOf(Instant.now()),
                 currentBtcPrice,
-                orderPrice,
-                leverage,
-                position,
-                sellOrBuy
+                request.orderPrice(),
+                request.leverage(),
+                request.position(),
+                request.sellOrBuy()
         );
 
         try {
@@ -78,12 +82,13 @@ public class OrderResultService {
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
 
-        return orderResult;
+        return BuyMarketOrderAppResponse.of(orderResult);
     }
 
     @Transactional
-    public OrderResult executeSellMarketOrder(Long userId, String btcAmount, String position, String sellOrBuy) {
-        if (btcService.getBtcByUserId(userId).getBtcBalance().compareTo(new BigDecimal(btcAmount)) < 0) {
+    public SellMarketOrderAppResponse executeSellMarketOrder(Long userId, SellMarketOrderAppRequest request) {
+
+        if (!btcService.getBtcByUserId(userId).isBtcEnough(new BigDecimal(request.btcAmount()))) {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BTC);
         }
 
@@ -93,7 +98,7 @@ public class OrderResultService {
             throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
         }
 
-        String orderPrice = convertBtcToKRW(btcAmount);
+        String orderPrice = convertBtcToKRW(request.btcAmount());
 
         OrderResult orderResult = new OrderResult(
                 userId,
@@ -102,8 +107,8 @@ public class OrderResultService {
                 currentBtcPrice,
                 orderPrice,
                 0,
-                position,
-                sellOrBuy
+                request.position(),
+                request.sellOrBuy()
         );
 
         try {
@@ -114,7 +119,7 @@ public class OrderResultService {
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
 
-        return orderResult;
+        return SellMarketOrderAppResponse.of(orderResult);
     }
 
     public String convertBtcToKRW(String btcAmount) {

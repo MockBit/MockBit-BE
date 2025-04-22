@@ -14,7 +14,7 @@ public record SellMarketOrderAppResponse(
         String sellOrBuy
 ) {
 
-    public static SellMarketOrderAppResponse from(OrderResult orderResult) {
+    public static SellMarketOrderAppResponse of(OrderResult orderResult) {
         return new SellMarketOrderAppResponse(
                 orderResult.getId(),
                 orderResult.getPrice(),
