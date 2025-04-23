@@ -87,7 +87,6 @@ public class OrderResultService {
 
     @Transactional
     public SellMarketOrderAppResponse executeSellMarketOrder(Long userId, SellMarketOrderAppRequest request) {
-
         if (!btcService.getBtcByUserId(userId).isBtcEnough(new BigDecimal(request.btcAmount()))) {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BTC);
         }
@@ -125,6 +124,12 @@ public class OrderResultService {
     public String convertBtcToKRW(String btcAmount) {
         BigDecimal btc = new BigDecimal(btcAmount);
 
-        return String.valueOf(btc);
+        BigDecimal currentBtcPrice = (BigDecimal) redisService.getData(CURRENT_PRICE_KEY);
+        if (currentBtcPrice == null) {
+            throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
+        }
+        BigDecimal convertedKRW = currentBtcPrice.multiply(btc);
+
+        return String.valueOf(convertedKRW);
     }
 }
