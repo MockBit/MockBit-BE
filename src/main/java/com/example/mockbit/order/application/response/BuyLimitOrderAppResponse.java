@@ -2,7 +2,7 @@ package com.example.mockbit.order.application.response;
 
 import com.example.mockbit.order.domain.Order;
 
-public record OrderAppResponse(
+public record BuyLimitOrderAppResponse(
         String id,
         String price,
         Long userId,
@@ -14,8 +14,8 @@ public record OrderAppResponse(
         String sellOrBuy
 ) {
 
-    public static OrderAppResponse from(Order order) {
-        return new OrderAppResponse(
+    public static BuyLimitOrderAppResponse of(Order order) {
+        return new BuyLimitOrderAppResponse(
                 order.getId(),
                 order.getPrice(),
                 order.getUserId(),
