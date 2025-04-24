@@ -1,14 +1,15 @@
 package com.example.mockbit.order.presentation;
 
 import com.example.mockbit.common.auth.Login;
-import com.example.mockbit.common.auth.application.AuthService;
 import com.example.mockbit.common.exception.MockBitException;
 import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderService;
-import com.example.mockbit.order.application.request.OrderAppRequest;
+import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
+import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
-import com.example.mockbit.order.application.response.OrderAppResponse;
+import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
+import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.application.response.UpdateOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import jakarta.validation.Valid;
@@ -32,39 +33,43 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/register")
-    public ResponseEntity<OrderAppResponse> order(
-            @Valid @RequestBody OrderAppRequest request,
+    @PostMapping("/buy")
+    public ResponseEntity<BuyLimitOrderAppResponse> buyLimitOrder(
+            @Valid @RequestBody BuyLimitOrderAppRequest request,
             @Login Long userId
     ) {
+        BuyLimitOrderAppResponse response = orderService.executeBuyLimitOrder(userId, request);
+        return ResponseEntity.ok(response);
+    }
 
-        Order order = orderService.saveOrder(userId, request);
-
-        return ResponseEntity.ok(OrderAppResponse.from(order));
+    @PostMapping("/sell")
+    public ResponseEntity<SellLimitOrderAppResponse> sellLimitOrder(
+            @Valid @RequestBody SellLimitOrderAppRequest request,
+            @Login Long userId
+    ) {
+        SellLimitOrderAppResponse response = orderService.executeSellLimitOrder(userId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/pending/orders")
-    public ResponseEntity<List<OrderAppResponse>> getUserOrders(
+    public ResponseEntity<List<BuyLimitOrderAppResponse>> getUserOrders(
             @Login Long userId
     ) {
-
         List<Order> orders = orderService.findOrderByUserId(userId);
-
         if (orders.isEmpty()) {
             return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(
+                    orders.stream().map(BuyLimitOrderAppResponse::of).collect(Collectors.toList())
+            );
         }
-
-        return ResponseEntity.ok(
-                orders.stream().map(OrderAppResponse::from).collect(Collectors.toList())
-        );
     }
 
     @DeleteMapping("/cancel/orders/{orderId}")
-    public ResponseEntity<OrderAppResponse> cancelOrder(
+    public ResponseEntity<BuyLimitOrderAppResponse> cancelOrder(
             @PathVariable String orderId,
             @Login Long userId
     ) {
-
         Order order = orderService.findOrderById(orderId)
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
 
@@ -73,7 +78,7 @@ public class OrderController {
         }
         orderService.deleteOrderById(orderId);
 
-        return ResponseEntity.ok(OrderAppResponse.from(order));
+        return ResponseEntity.ok(BuyLimitOrderAppResponse.of(order));
     }
 
     @PutMapping("/update/orders/{orderId}")
@@ -82,9 +87,7 @@ public class OrderController {
             @Valid @RequestBody UpdateOrderAppRequest request,
             @Login Long userId
     ) {
-
         Order updatedOrder = orderService.updateOrder(orderId, request, userId);
-
         return ResponseEntity.ok(UpdateOrderAppResponse.from(updatedOrder));
     }
 }
