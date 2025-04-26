@@ -31,6 +31,8 @@ public enum MockbitErrorCode {
     /* System */
     NO_RESOURCE_REQUEST("존재하지 않는 자원입니다."),
     INTERNAL_SERVER_ERROR("서버에서 예기치 못한 오류가 발생했습니다. 잠시 후에 다시 시도해주세요"),
+    REDIS_SERIALIZE_ERROR("레디스 직렬화 오류가 발생했습니다."),
+    REDIS_DESERIALIZE_ERROR("레디스 역직렬화 오류가 발생했습니다."),
 
     /* Order */
     NO_ORDER_RESOURCE("존재하지 않는 주문입니다."),
@@ -48,7 +50,6 @@ public enum MockbitErrorCode {
     NOT_EXISTS_CURRENT_PRICE("현재 가격을 가져오는데 실패했습니다."),
     INVALID_ORDER_TYPE("올바르지 않은 주문 종류입니다."),
     USER_ID_NOT_EQUALS_ORDER("해당 사용자 외에는 주문을 설정할 수 없습니다."),
-    ORDER_UNDER_MINIMUM("최소 주문 금액은 5천원입니다."),
     ALREADY_IN_POSITION("교차 포지션 진입은 불가능합니다.")
     ;
 
