@@ -49,16 +49,11 @@ public class OrderResultService {
 
     @Transactional
     public BuyMarketOrderAppResponse executeBuyMarketOrder(Long userId, BuyMarketOrderAppRequest request) {
-        if (Integer.parseInt(request.orderPrice()) < 5000) {
-            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
-        }
-
         if (!accountService.getAccountByUserId(userId).isBalanceEnough(new BigDecimal(request.orderPrice()))) {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
         }
 
         String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
-
         if (currentBtcPrice == null) {
             throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
         }
@@ -92,7 +87,6 @@ public class OrderResultService {
         }
 
         String currentBtcPrice = (String) redisService.getData(CURRENT_PRICE_KEY);
-
         if (currentBtcPrice == null) {
             throw new MockBitException(MockbitErrorCode.NOT_EXISTS_CURRENT_PRICE);
         }
