@@ -44,7 +44,6 @@ public class OrderService {
 
     @Transactional
     public BuyLimitOrderAppResponse executeBuyLimitOrder(Long userId, BuyLimitOrderAppRequest request) {
-        validateOrderPrice(request.orderPrice());
         BigDecimal orderPrice = new BigDecimal(request.orderPrice());
         if (!isBalanceEnough(userId, orderPrice)) {
             throw new MockBitException(MockbitErrorCode.NOT_ENOUGH_BALANCE);
@@ -72,7 +71,7 @@ public class OrderService {
                 .build();
 
         redisService.saveListData(redisUserOrderKey, orderId);
-        redisService.saveData(redisOrderDetailKey, order);
+        redisService.saveOrderData(redisOrderDetailKey, order);
         kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), order.toString());
         accountService.processOrder(userId, orderPrice);
 
@@ -109,7 +108,7 @@ public class OrderService {
                 .build();
 
         redisService.saveListData(redisUserOrderKey, orderId);
-        redisService.saveData(redisOrderDetailKey, order);
+        redisService.saveOrderData(redisOrderDetailKey, order);
         kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), order.toString());
         accountService.processOrder(userId, new BigDecimal(orderPrice));
 
@@ -160,10 +159,6 @@ public class OrderService {
             throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
         }
 
-        if (Integer.parseInt(request.orderPrice()) < 5000) {
-            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
-        }
-
         accountService.cancelOrder(userId, new BigDecimal(existingOrder.getOrderPrice()));
 
         Order newOrder = Order.builder()
@@ -178,7 +173,7 @@ public class OrderService {
                 .sellOrBuy(request.sellOrBuy())
                 .build();
 
-        redisService.saveData(redisOrderDetailKey, newOrder);
+        redisService.saveOrderData(redisOrderDetailKey, newOrder);
         kafkaProducerService.sendMessage(KAFKA_UPDATE_ORDERS_TOPIC, request.price(), newOrder.toString());
         accountService.processOrder(userId, new BigDecimal(newOrder.getOrderPrice()));
 
@@ -203,11 +198,5 @@ public class OrderService {
 
     private boolean isBtcEnough(Long userId, BigDecimal btcAmount) {
         return btcService.getBtcByUserId(userId).isBtcEnough(btcAmount);
-    }
-
-    private void validateOrderPrice(String orderPrice) {
-        if (Integer.parseInt(orderPrice) < 5000) {
-            throw new MockBitException(MockbitErrorCode.ORDER_UNDER_MINIMUM);
-        }
     }
 }
