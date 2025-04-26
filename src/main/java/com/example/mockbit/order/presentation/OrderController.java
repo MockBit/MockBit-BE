@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     @GetMapping("/pending/orders")
-    public ResponseEntity<List<BuyLimitOrderAppResponse>> getUserOrders(
+    public ResponseEntity<List<BuyLimitOrderAppResponse>> getPendingOrders(
             @Login Long userId
     ) {
         List<Order> orders = orderService.findOrderByUserId(userId);
