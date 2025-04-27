@@ -39,10 +39,10 @@ public class OrderResultService {
         try {
             accountService.completeOrder(orderResult);
             orderResultRepository.save(orderResult);
-            log.info("지정가 주문이 완료되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
+            log.info("지정가 주문이 채결되었습니다. - User: {}, Price: {}", order.getUserId(), order.getPrice());
         } catch (Exception e) {
             accountService.cancelOrder(order.getUserId(), new BigDecimal(order.getOrderPrice()));
-            log.error("지정가 주문 처리 실패 - User: {}, Price: {}, Error: {}", order.getUserId(), order.getPrice(), e.getMessage());
+            log.error("지정가 주문을 채결하는데 실패하였습니다. - User: {}, Price: {}, Error: {}", order.getUserId(), order.getPrice(), e.getMessage());
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
     }
@@ -72,7 +72,7 @@ public class OrderResultService {
         try {
             orderResultRepository.save(orderResult);
             accountService.processMarketOrder(orderResult);
-            log.info("현재가 주문 구매가 완료되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
+            log.info("시장가 구매 주문이 채결되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
@@ -107,7 +107,7 @@ public class OrderResultService {
         try {
             orderResultRepository.save(orderResult);
             accountService.processMarketOrder(orderResult);
-            log.info("현재가 주문 구매가 완료되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
+            log.info("시장가 판매 주문이 채결되었습니다. - User: {}, Price: {}", userId, currentBtcPrice);
         } catch (Exception e) {
             throw new MockBitException(MockbitErrorCode.MARKET_ORDER_ERROR, e);
         }
