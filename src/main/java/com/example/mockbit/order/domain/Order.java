@@ -1,14 +1,17 @@
 package com.example.mockbit.order.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @RedisHash("Orders")
 public class Order implements Serializable {
     private String id; // 주문 ID -> Orders:{price}:{userId}

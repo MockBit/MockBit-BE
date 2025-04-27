@@ -74,7 +74,6 @@ public class UserController {
                 .build();
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<UserAppResponse> getUser(@PathVariable Long id) {
         UserAppResponse user = userService.findById(id);
@@ -94,13 +93,11 @@ public class UserController {
         }
 
         try {
-            log.info("token"+userId);
             response.put("isLoggedIn", true);
             response.put("userId", userId);
             return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
             response.put("isLoggedIn", false);
-            log.info("No token");
             return ResponseEntity.ok(response);
         }
     }
