@@ -9,6 +9,7 @@ import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
+import com.example.mockbit.order.application.response.PendingLimitOrders;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.application.response.UpdateOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -52,16 +53,16 @@ public class OrderController {
     }
 
     @GetMapping("/pending/orders")
-    public ResponseEntity<List<BuyLimitOrderAppResponse>> getPendingOrders(
+    public ResponseEntity<PendingLimitOrders> getPendingOrders(
             @Login Long userId
     ) {
-        List<Order> orders = orderService.findOrderByUserId(userId);
+        Optional<Object> orders = orderService.findOrderByUserId(userId);
         if (orders.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
-            return ResponseEntity.ok(
-                    orders.stream().map(BuyLimitOrderAppResponse::of).collect(Collectors.toList())
-            );
+            List<Order> orderList = (List<Order>) orders.get();
+            PendingLimitOrders response = PendingLimitOrders.of(orderList);
+            return ResponseEntity.ok(response);
         }
     }
 
