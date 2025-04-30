@@ -56,14 +56,8 @@ public class OrderController {
     public ResponseEntity<PendingLimitOrders> getPendingOrders(
             @Login Long userId
     ) {
-        Optional<Object> orders = orderService.findOrderByUserId(userId);
-        if (orders.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        } else {
-            List<Order> orderList = (List<Order>) orders.get();
-            PendingLimitOrders response = PendingLimitOrders.of(orderList);
-            return ResponseEntity.ok(response);
-        }
+        PendingLimitOrders response = orderService.findOrderByUserId(userId);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/cancel/orders/{orderId}")

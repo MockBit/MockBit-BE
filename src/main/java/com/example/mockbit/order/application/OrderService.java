@@ -10,6 +10,7 @@ import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
+import com.example.mockbit.order.application.response.PendingLimitOrders;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -125,9 +127,10 @@ public class OrderService {
         return Optional.ofNullable((Order) redisService.getData(redisOrderDetailKey));
     }
 
-    public Optional<Object> findOrderByUserId(Long userId) {
+    public PendingLimitOrders findOrderByUserId(Long userId) {
         String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
-        return redisService.getListData(redisUserOrderKey);
+        Optional<Object> orders = redisService.getListData(redisUserOrderKey);
+        return orders.map(o -> PendingLimitOrders.of((List<Order>) o)).orElse(null);
     }
 
     @Transactional
