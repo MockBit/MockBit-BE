@@ -12,6 +12,7 @@ import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +32,7 @@ public class OrderService {
     private final AccountService accountService;
     private final BtcService btcService;
     private final KafkaProducerService kafkaProducerService;
+    private final ObjectMapper objectMapper;
 
     private final static String CURRENT_PRICE_KEY = "current-btc-price";
     private static final String REDIS_USER_ORDER_KEY = "Orders:%s"; // %s = userId; value = List OrderId
@@ -70,10 +69,13 @@ public class OrderService {
                 .sellOrBuy(request.sellOrBuy())
                 .build();
 
+        String orderJson = convertOrderToJson(order);
+
         redisService.saveListData(redisUserOrderKey, orderId);
         redisService.saveOrderData(redisOrderDetailKey, order);
-        kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), order.toString());
+        kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), orderJson);
         accountService.processOrder(userId, orderPrice);
+        log.info("지정가 구매 주문이 등록되었습니다. - Order: {}", order);
 
         return BuyLimitOrderAppResponse.of(order);
     }
@@ -107,10 +109,13 @@ public class OrderService {
                 .sellOrBuy(request.sellOrBuy())
                 .build();
 
+        String orderJson = convertOrderToJson(order);
+
         redisService.saveListData(redisUserOrderKey, orderId);
         redisService.saveOrderData(redisOrderDetailKey, order);
-        kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), order.toString());
+        kafkaProducerService.sendMessage(KAFKA_LIMIT_ORDERS_TOPIC, request.price(), orderJson);
         accountService.processOrder(userId, new BigDecimal(orderPrice));
+        log.info("지정가 판매 주문이 채결되었습니다. - Order: {}", order);
 
         return SellLimitOrderAppResponse.of(order);
     }
@@ -120,14 +125,9 @@ public class OrderService {
         return Optional.ofNullable((Order) redisService.getData(redisOrderDetailKey));
     }
 
-    public List<Order> findOrderByUserId(Long userId) {
+    public Optional<Object> findOrderByUserId(Long userId) {
         String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
-        Set<Object> orderIds = redisService.getSetMembers(redisUserOrderKey);
-
-        return orderIds.stream()
-                .map(orderId -> String.format(REDIS_ORDER_DETAIL_KEY, orderId))
-                .map(key -> (Order) redisService.getData(key))
-                .collect(Collectors.toList());
+        return redisService.getListData(redisUserOrderKey);
     }
 
     @Transactional
@@ -143,7 +143,7 @@ public class OrderService {
 
         redisService.removeListData(redisUserOrderKey, orderId);
         redisService.deleteData(redisOrderDetailKey);
-        kafkaProducerService.sendMessage(KAFKA_CANCEL_ORDERS_TOPIC, order.getPrice(), order.toString());
+        kafkaProducerService.sendMessage(KAFKA_CANCEL_ORDERS_TOPIC, order.getPrice(), convertOrderToJson(order));
         accountService.cancelOrder(userId, new BigDecimal(order.getOrderPrice()));
     }
 
@@ -198,5 +198,13 @@ public class OrderService {
 
     private boolean isBtcEnough(Long userId, BigDecimal btcAmount) {
         return btcService.getBtcByUserId(userId).isBtcEnough(btcAmount);
+    }
+
+    private String convertOrderToJson(Order order) {
+        try {
+            return objectMapper.writeValueAsString(order);
+        } catch (Exception e) {
+            throw new MockBitException(MockbitErrorCode.ORDER_ERROR);
+        }
     }
 }
