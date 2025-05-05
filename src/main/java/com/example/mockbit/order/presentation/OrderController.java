@@ -75,14 +75,4 @@ public class OrderController {
 
         return ResponseEntity.ok(BuyLimitOrderAppResponse.of(order));
     }
-
-    @PutMapping("/update/orders/{orderId}")
-    public ResponseEntity<UpdateOrderAppResponse> updateOrder(
-            @PathVariable String orderId,
-            @Valid @RequestBody UpdateOrderAppRequest request,
-            @Login Long userId
-    ) {
-        Order updatedOrder = orderService.updateOrder(orderId, request, userId);
-        return ResponseEntity.ok(UpdateOrderAppResponse.from(updatedOrder));
-    }
 }
