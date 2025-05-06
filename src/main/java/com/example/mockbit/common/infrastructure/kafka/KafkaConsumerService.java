@@ -71,20 +71,6 @@ public class KafkaConsumerService {
         }
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic.update-limit-order}", groupId = "${spring.kafka.consumer.group-id}")
-    public void consumeUpdateOrder(String message) {
-        try {
-            Order updatedOrder = objectMapper.readValue(message, Order.class);
-            List<Order> orders = priceOrderMap.get(updatedOrder.getPrice());
-            if (orders != null) {
-                orders.removeIf(o -> o.getId().equals(updatedOrder.getId()));
-                orders.add(updatedOrder);
-            }
-        } catch (Exception e) {
-            throw new MockBitException(MockbitErrorCode.ORDER_ERROR, e);
-        }
-    }
-
     @KafkaListener(topics = "${spring.kafka.topic.cancel-limit-order}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeCancelOrder(String message) {
         try {
