@@ -14,7 +14,6 @@ import com.example.mockbit.user.domain.User;
 import com.example.mockbit.user.domain.Userid;
 import com.example.mockbit.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +26,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AccountService accountService;
-    private final ApplicationEventPublisher eventPublisher;
     private final TokenProvider tokenProvider;
 
     @Transactional
@@ -84,13 +82,6 @@ public class UserService {
         if (request.password() != null && !request.password().isBlank()) {
             user.changePassword(request.password());
         }
-    }
-
-    @Transactional
-    public void deleteUser(Long id) {
-        User user = getUserById(id);
-        userRepository.delete(user);
-        eventPublisher.publishEvent(new UserDeleteEvent(id));
     }
 
     @Transactional(readOnly = true)

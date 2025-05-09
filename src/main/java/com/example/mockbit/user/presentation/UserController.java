@@ -117,22 +117,12 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-
-
     @PatchMapping
     public ResponseEntity<Void> updateUser(
             @Login Long id,
             @Valid @RequestBody UserUpdateAppRequest request
     ) {
         userService.updateUser(id, request);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping
-    public ResponseEntity<Void> deleteUser(
-            @Login Long id
-    ) {
-        userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
