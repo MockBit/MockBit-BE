@@ -2,7 +2,7 @@ package com.example.mockbit.order.application.response;
 
 import com.example.mockbit.order.domain.Order;
 
-public record PendingLimitOrder(
+public record PendingLimitOrderAppResponse(
         String id,
         String price,
         Long userId,
@@ -14,8 +14,8 @@ public record PendingLimitOrder(
         String sellOrBuy
 ) {
 
-    public static PendingLimitOrder of(Order order) {
-        return new PendingLimitOrder(
+    public static PendingLimitOrderAppResponse of(Order order) {
+        return new PendingLimitOrderAppResponse(
                 order.getId(),
                 order.getPrice(),
                 order.getUserId(),

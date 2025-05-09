@@ -7,11 +7,9 @@ import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderService;
 import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
-import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
-import com.example.mockbit.order.application.response.PendingLimitOrders;
+import com.example.mockbit.order.application.response.PendingLimitOrdersAppResponse;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
-import com.example.mockbit.order.application.response.UpdateOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -53,10 +49,10 @@ public class OrderController {
     }
 
     @GetMapping("/pending/orders")
-    public ResponseEntity<PendingLimitOrders> getPendingOrders(
+    public ResponseEntity<PendingLimitOrdersAppResponse> getPendingOrders(
             @Login Long userId
     ) {
-        PendingLimitOrders response = orderService.findOrderByUserId(userId);
+        PendingLimitOrdersAppResponse response = orderService.findOrderByUserId(userId);
         return ResponseEntity.ok(response);
     }
 
