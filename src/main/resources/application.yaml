@@ -7,14 +7,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
   kafka:
     topic:
       btc-price: mockbit
       create-limit-order: limit-orders
       cancel-limit-order: cancel-limit-orders
-      update-limit-order: update-limit-orders
     key:
       current-price-key: current-price
     bootstrap-servers: localhost:9092

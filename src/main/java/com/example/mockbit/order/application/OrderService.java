@@ -8,9 +8,8 @@ import com.example.mockbit.common.infrastructure.kafka.KafkaProducerService;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
-import com.example.mockbit.order.application.request.UpdateOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
-import com.example.mockbit.order.application.response.PendingLimitOrders;
+import com.example.mockbit.order.application.response.PendingLimitOrdersAppResponse;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +39,6 @@ public class OrderService {
     private static final String REDIS_USER_ORDER_KEY = "Orders:%s"; // %s = userId; value = List OrderId
     private static final String REDIS_ORDER_DETAIL_KEY = "Order_Details:%s"; // %s = orderId; value = Hash Order
     private static final String KAFKA_LIMIT_ORDERS_TOPIC = "limit-orders";
-    private static final String KAFKA_UPDATE_ORDERS_TOPIC = "update-limit-orders";
     private static final String KAFKA_CANCEL_ORDERS_TOPIC = "cancel-limit-orders";
 
     @Transactional
@@ -127,10 +125,10 @@ public class OrderService {
         return Optional.ofNullable((Order) redisService.getData(redisOrderDetailKey));
     }
 
-    public PendingLimitOrders findOrderByUserId(Long userId) {
+    public PendingLimitOrdersAppResponse findOrderByUserId(Long userId) {
         String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
         Optional<Object> orders = redisService.getListData(redisUserOrderKey);
-        return orders.map(o -> PendingLimitOrders.of((List<Order>) o)).orElse(null);
+        return orders.map(o -> PendingLimitOrdersAppResponse.of((List<Order>) o)).orElse(null);
     }
 
     @Transactional
@@ -148,39 +146,6 @@ public class OrderService {
         redisService.deleteData(redisOrderDetailKey);
         kafkaProducerService.sendMessage(KAFKA_CANCEL_ORDERS_TOPIC, order.getPrice(), convertOrderToJson(order));
         accountService.cancelOrder(userId, new BigDecimal(order.getOrderPrice()));
-    }
-
-    @Transactional
-    public Order updateOrder(String orderId, UpdateOrderAppRequest request, Long userId) {
-        String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
-        Order existingOrder = (Order) redisService.getData(redisOrderDetailKey);
-
-        if (existingOrder == null) {
-            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
-        }
-        if (!Objects.equals(existingOrder.getUserId(), userId)) {
-            throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
-        }
-
-        accountService.cancelOrder(userId, new BigDecimal(existingOrder.getOrderPrice()));
-
-        Order newOrder = Order.builder()
-                .id(orderId)
-                .price(request.price())
-                .userId(userId)
-                .orderedAt(String.valueOf(Instant.now()))
-                .btcPrice(request.btcPrice())
-                .orderPrice(request.orderPrice())
-                .leverage(request.leverage())
-                .position(request.position())
-                .sellOrBuy(request.sellOrBuy())
-                .build();
-
-        redisService.saveOrderData(redisOrderDetailKey, newOrder);
-        kafkaProducerService.sendMessage(KAFKA_UPDATE_ORDERS_TOPIC, request.price(), newOrder.toString());
-        accountService.processOrder(userId, new BigDecimal(newOrder.getOrderPrice()));
-
-        return newOrder;
     }
 
     private String convertBtcToKRW(String btcAmount) {
