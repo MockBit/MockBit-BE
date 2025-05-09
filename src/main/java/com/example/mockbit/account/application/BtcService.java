@@ -29,9 +29,8 @@ public class BtcService {
 
     @Transactional
     public void updateProfitAndCheckLiquidation(Long userId, BigDecimal currentBtcPrice) {
-        Btc btc = btcRepository.findByUserId(userId)
-                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
-        if (btc == null || btc.getBtcBalance().compareTo(BigDecimal.ZERO) <= 0) {
+        Btc btc = getBtcByUserId(userId);
+        if (!btc.isBtcEnough(BigDecimal.ZERO)) {
             return;
         }
 
@@ -60,11 +59,7 @@ public class BtcService {
 
     @Transactional
     public void liquidatePosition(Long userId, BigDecimal currentBtcPrice) {
-        Btc btc = btcRepository.findByUserId(userId)
-                .orElseThrow(() -> new MockBitException(MockbitErrorCode.ACCOUNT_NOT_FOUND));
-        if (btc == null) {
-            throw new MockBitException(MockbitErrorCode.USER_NOT_FOUND);
-        }
+        Btc btc = getBtcByUserId(userId);
         btc.executeLiquidation();
 
         OrderResult liquidationResult = new OrderResult(
@@ -79,6 +74,10 @@ public class BtcService {
         );
         btcRepository.save(btc);
         orderResultRepository.save(liquidationResult);
+    }
+
+    public String avgEntryPrice(Long userId) {
+        return String.valueOf(getBtcByUserId(userId).getAvgEntryPrice());
     }
 
     private BigDecimal calculateProfit(Btc btc, BigDecimal currentBtcPrice) {
