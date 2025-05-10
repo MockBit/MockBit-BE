@@ -48,8 +48,9 @@ security:
       expire-length: 604800000 # 1주일
 
 cookie:
-  http-only: false
-  secure: false
+  http-only: true
+  secure: true
+  domain: "localhost"
   path: /
-  same-site: none
+  same-site: "None"
   max-age: 7D

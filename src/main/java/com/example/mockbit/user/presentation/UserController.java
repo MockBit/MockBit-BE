@@ -60,15 +60,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Void> login(@Valid @RequestBody UserLoginAppRequest request) {
         String token = userService.login(request);
-        ResponseCookie responseCookie = ResponseCookie.from(authService.getTokenName(), token)
-                .httpOnly(true)
-                .secure(true)
-                .domain("localhost")
-                .path("/")
-                .sameSite("None")
-                .maxAge(3600)
-                .build();
-
+        ResponseCookie responseCookie = createResponseCookie(token);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .build();
@@ -104,15 +96,7 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        ResponseCookie expiredCookie = ResponseCookie.from(authService.getTokenName(), "")
-                .httpOnly(true)
-                .secure(true)
-                .domain("localhost")
-                .path("/")
-                .sameSite("None")
-                .maxAge(0)
-                .build();
-
+        ResponseCookie expiredCookie = expireCookie();
         response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
         return ResponseEntity.ok().build();
     }
