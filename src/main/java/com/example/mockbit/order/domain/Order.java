@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @RedisHash("Orders")
 public class Order implements Serializable {
-    private String id; // 주문 ID -> Orders:{price}:{userId}
+    private String id; // 주문 ID
     private String price; // 주문 가격 -> 100,000,000
     private Long userId; // 주문자 ID -> 123
 

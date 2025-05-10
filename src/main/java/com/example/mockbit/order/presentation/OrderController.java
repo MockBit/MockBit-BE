@@ -1,16 +1,15 @@
 package com.example.mockbit.order.presentation;
 
 import com.example.mockbit.common.auth.Login;
-import com.example.mockbit.common.exception.MockBitException;
-import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.order.application.OrderService;
 import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
+import com.example.mockbit.order.application.request.CancelLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
+import com.example.mockbit.order.application.response.CancelLimitOrderAppResponse;
 import com.example.mockbit.order.application.response.PendingLimitOrdersAppResponse;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
-import com.example.mockbit.order.domain.Order;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Objects;
 
 @Slf4j
 @Controller
@@ -56,19 +53,12 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/cancel/orders/{orderId}")
-    public ResponseEntity<BuyLimitOrderAppResponse> cancelOrder(
-            @PathVariable String orderId,
+    @DeleteMapping("/cancel/orders")
+    public ResponseEntity<CancelLimitOrderAppResponse> cancelOrder(
+            @Valid @RequestBody CancelLimitOrderAppRequest request,
             @Login Long userId
     ) {
-        Order order = orderService.findOrderById(orderId)
-                .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
-
-        if (!Objects.equals(order.getUserId(), userId)) {
-            throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
-        }
-        orderService.deleteOrderById(orderId);
-
-        return ResponseEntity.ok(BuyLimitOrderAppResponse.of(order));
+        CancelLimitOrderAppResponse response = orderService.deleteOrderByOrderId(userId, request);
+        return ResponseEntity.ok(response);
     }
 }

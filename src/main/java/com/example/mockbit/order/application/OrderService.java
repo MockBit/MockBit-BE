@@ -7,11 +7,14 @@ import com.example.mockbit.common.exception.MockbitErrorCode;
 import com.example.mockbit.common.infrastructure.kafka.KafkaProducerService;
 import com.example.mockbit.common.infrastructure.redis.RedisService;
 import com.example.mockbit.order.application.request.BuyLimitOrderAppRequest;
+import com.example.mockbit.order.application.request.CancelLimitOrderAppRequest;
 import com.example.mockbit.order.application.request.SellLimitOrderAppRequest;
 import com.example.mockbit.order.application.response.BuyLimitOrderAppResponse;
+import com.example.mockbit.order.application.response.CancelLimitOrderAppResponse;
 import com.example.mockbit.order.application.response.PendingLimitOrdersAppResponse;
 import com.example.mockbit.order.application.response.SellLimitOrderAppResponse;
 import com.example.mockbit.order.domain.Order;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -120,9 +123,18 @@ public class OrderService {
         return SellLimitOrderAppResponse.of(order);
     }
 
-    public Optional<Order> findOrderById(String orderId) {
+    public Optional<Order> findOrderByOrderId(String orderId) {
         String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
-        return Optional.ofNullable((Order) redisService.getData(redisOrderDetailKey));
+        String orderJson = (String) redisService.getData(redisOrderDetailKey);
+        if (orderJson != null) {
+            try {
+                Order order = objectMapper.readValue(orderJson, Order.class);
+                return Optional.ofNullable(order);
+            } catch (JsonProcessingException e) {
+                throw new MockBitException(MockbitErrorCode.REDIS_DESERIALIZE_ERROR, e);
+            }
+        }
+        return Optional.empty();
     }
 
     public PendingLimitOrdersAppResponse findOrderByUserId(Long userId) {
@@ -132,20 +144,23 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrderById(String orderId) {
+    public CancelLimitOrderAppResponse deleteOrderByOrderId(Long userId, CancelLimitOrderAppRequest request) {
+        String orderId = request.orderId();
         String redisOrderDetailKey = String.format(REDIS_ORDER_DETAIL_KEY, orderId);
-        Order order = (Order) redisService.getData(redisOrderDetailKey);
-        if (order == null) {
-            throw new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE);
-        }
-
-        Long userId = order.getUserId();
         String redisUserOrderKey = String.format(REDIS_USER_ORDER_KEY, userId);
+
+        Order order = findOrderByOrderId(orderId)
+                .orElseThrow(() -> new MockBitException(MockbitErrorCode.NO_ORDER_RESOURCE));
+        if (!Objects.equals(order.getUserId(), userId)) {
+            throw new MockBitException(MockbitErrorCode.USER_ID_NOT_EQUALS_ORDER);
+        }
 
         redisService.removeListData(redisUserOrderKey, orderId);
         redisService.deleteData(redisOrderDetailKey);
         kafkaProducerService.sendMessage(KAFKA_CANCEL_ORDERS_TOPIC, order.getPrice(), convertOrderToJson(order));
         accountService.cancelOrder(userId, new BigDecimal(order.getOrderPrice()));
+
+        return CancelLimitOrderAppResponse.of(orderId);
     }
 
     private String convertBtcToKRW(String btcAmount) {
