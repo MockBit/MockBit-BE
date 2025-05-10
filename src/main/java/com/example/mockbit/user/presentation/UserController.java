@@ -43,17 +43,15 @@ public class UserController {
 
     @GetMapping("/check-id")
     public ResponseEntity<Map<String, Boolean>> checkUserId(@RequestParam String userid) {
-        boolean isAvailable = !userService.isUseridExists(userid);
         Map<String, Boolean> response = new HashMap<>();
-        response.put("available", isAvailable);
+        response.put("available", userService.isUseridAvailable(userid));
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/check-nickname")
     public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam String nickname) {
-        boolean isAvailable = !userService.isNicknameExists(nickname);
         Map<String, Boolean> response = new HashMap<>();
-        response.put("available", isAvailable);
+        response.put("available", userService.isNicknameAvailable(nickname));
         return ResponseEntity.ok(response);
     }
 
@@ -64,6 +62,13 @@ public class UserController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie expiredCookie = expireCookie();
+        response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")
@@ -78,27 +83,11 @@ public class UserController {
             @Login Long userId
     ) {
         Map<String, Object> response = new HashMap<>();
-
-        if ((token == null || token.isBlank()) && userId == null) {
-            response.put("isLoggedIn", false);
-            return ResponseEntity.ok(response);
-        }
-
-        try {
-            response.put("isLoggedIn", true);
+        response.put("isLoggedIn", userService.isLoggedIn(token, userId));
+        if (userId != null) {
             response.put("userId", userId);
-            return ResponseEntity.ok(response);
-        } catch (AuthenticationException e) {
-            response.put("isLoggedIn", false);
-            return ResponseEntity.ok(response);
         }
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
-        ResponseCookie expiredCookie = expireCookie();
-        response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping

@@ -33,23 +33,19 @@ public class UserService {
         if (isUseridExists(request.userid())) {
             throw new MockBitException(MockbitErrorCode.USER_ID_ALREADY_EXIST);
         }
-
         if (isNicknameExists(request.nickname())) {
             throw new MockBitException(MockbitErrorCode.USER_NICKNAME_ALREADY_EXIST);
         }
 
         User user = request.toUser();
-
         userRepository.saveAndFlush(user);
         accountService.createAccountForUser(user);
-
         return user.getId();
     }
 
     @Transactional(readOnly = true)
     public void validateUser(Userid userid, String rawPassword) {
         User user = getUserByUserid(userid);
-
         if (user.isPasswordMismatch(rawPassword)) {
             throw new AuthenticationException(MockbitErrorCode.ID_PASSWORD_INVALID);
         }
@@ -58,7 +54,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public String login(UserLoginAppRequest request) {
         User user = getUserByUserid(new Userid(request.userid()));
-
         if (user.isPasswordMismatch(request.password())) {
             throw new MockBitException(MockbitErrorCode.ID_PASSWORD_INVALID);
         }
@@ -71,14 +66,12 @@ public class UserService {
     @Transactional
     public void updateUser(Long id, UserUpdateAppRequest request) {
         User user = getUserById(id);
-
         if (!request.isNicknameExists() && !user.getNickname().getValue().equals(request.nickname())) {
             if (isNicknameExists(request.nickname())) {
                 throw new MockBitException(MockbitErrorCode.USER_NICKNAME_ALREADY_EXIST);
             }
             user.changeNickname(request.nickname());
         }
-
         if (request.password() != null && !request.password().isBlank()) {
             user.changePassword(request.password());
         }
@@ -91,17 +84,28 @@ public class UserService {
     }
 
     public boolean isUseridExists(String userid) {
-        if (userRepository.findByUserid(new Userid(userid)).isPresent()) {
-            return true;
-        } else {
-            return false;
-        }
+        return userRepository.findByUserid(new Userid(userid)).isPresent();
     }
 
     public boolean isNicknameExists(String nickname) {
-        if (userRepository.findByNickname(new Nickname(nickname)).isPresent()) {
+        return userRepository.findByNickname(new Nickname(nickname)).isPresent();
+    }
+
+    public boolean isUseridAvailable(String userid) {
+        return !isUseridExists(userid);
+    }
+
+    public boolean isNicknameAvailable(String nickname) {
+        return !isNicknameExists(nickname);
+    }
+
+    public boolean isLoggedIn(String token, Long userId) {
+        if (token == null || token.isBlank() || userId == null) {
+            return false;
+        }
+        try {
             return true;
-        } else {
+        } catch (AuthenticationException e) {
             return false;
         }
     }
