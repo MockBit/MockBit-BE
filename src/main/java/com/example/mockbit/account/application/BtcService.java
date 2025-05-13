@@ -76,7 +76,7 @@ public class BtcService {
         orderResultRepository.save(liquidationResult);
     }
 
-    public String avgEntryPrice(Long userId) {
+    public String getAvgEntryPriceByUserId(Long userId) {
         return String.valueOf(getBtcByUserId(userId).getAvgEntryPrice());
     }
 
@@ -103,6 +103,10 @@ public class BtcService {
     public Btc getBtcByUserId(Long userId) {
         return btcRepository.findByUserId(userId)
                 .orElseThrow(() -> new MockBitException(MockbitErrorCode.BTC_NOT_FOUND));
+    }
+
+    public String getLiquidationPriceByUserId(Long userId) {
+        return String.valueOf(getBtcByUserId(userId).getLiquidationPrice());
     }
 
     public List<Long> getAllUserIdsWithBtc() {

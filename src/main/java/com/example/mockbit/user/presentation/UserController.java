@@ -2,7 +2,6 @@ package com.example.mockbit.user.presentation;
 
 import com.example.mockbit.common.auth.Login;
 import com.example.mockbit.common.auth.application.AuthService;
-import com.example.mockbit.common.exception.AuthenticationException;
 import com.example.mockbit.common.properties.CookieProperties;
 import com.example.mockbit.user.application.request.UserLoginAppRequest;
 import com.example.mockbit.user.application.response.UserAppResponse;
