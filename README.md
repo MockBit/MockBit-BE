@@ -25,3 +25,5 @@
 - **실시간 포지션 조회**: WebSocket으로 평균 거래량, 레버리지, 수익률, 청산 금액 제공.
 - **자동 청산**: 비트코인 가격 변동 시 모든 포지션 실시간 점검 및 청산 처리.
 - **원화 충전**: 잔고 5,000원 미만 시 1,000만 원 자동 충전으로 사용자 경험 개선.
+
+[![hits](https://myhits.vercel.app/api/hit/https%3A%2F%2Fgithub.com%2FMockBit%2FMockBit-BE?color=green&label=hits&size=small)](https://myhits.vercel.app)
