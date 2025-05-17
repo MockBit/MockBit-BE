@@ -80,6 +80,10 @@ public class BtcService {
         return String.valueOf(getBtcByUserId(userId).getAvgEntryPrice());
     }
 
+    public String getBtcBalanceByUserId(Long userId) {
+        return String.valueOf(getBtcByUserId(userId).getBtcBalance());
+    }
+
     private BigDecimal calculateProfit(Btc btc, BigDecimal currentBtcPrice) {
         BigDecimal currentValue = btc.getBtcBalance().multiply(currentBtcPrice);
         BigDecimal investedValue = btc.getBtcBalance().multiply(btc.getAvgEntryPrice());

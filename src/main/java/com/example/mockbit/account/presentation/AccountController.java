@@ -29,6 +29,14 @@ public class AccountController {
         return Map.of("balance", balance);
     }
 
+    @GetMapping("/btc")
+    public Map<String, Object> btcInfo(
+            @Login Long userId
+    ) {
+        String btc = btcService.getBtcBalanceByUserId(userId);
+        return Map.of("btc", btc);
+    }
+
     @GetMapping("/avg-entry-price")
     public Map<String, Object> avgEntryPriceInfo(
             @Login Long userId
