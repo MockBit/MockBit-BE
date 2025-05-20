@@ -5,7 +5,7 @@
 **기술 스택**:
 
 - **Frontend**: React
-- **Backend**: Spring Boot, Gradle, Hibernate, Redis, Kafka, Grafana, Prometheus
+- **Backend**: Spring Boot, Gradle, Hibernate, Redis, Kafka
 - **Deploy**: AWS EC2, Docker
 
 ---
